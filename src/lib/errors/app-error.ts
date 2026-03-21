@@ -71,3 +71,14 @@ export class ForbiddenError extends AppError {
     });
   }
 }
+
+export class MethodNotAllowedError extends AppError {
+  constructor(message = 'Method not allowed', details?: unknown) {
+    super({
+      message,
+      statusCode: 405,
+      code: 'METHOD_NOT_ALLOWED',
+      details
+    });
+  }
+}
