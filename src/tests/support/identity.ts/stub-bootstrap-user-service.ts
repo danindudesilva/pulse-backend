@@ -2,8 +2,8 @@ import type {
   BootstrapUserExecutor,
   BootstrapUserInput,
   BootstrapUserResult
-} from '../../modules/identity/domain/bootstrap-user.types.js';
-import { WORKSPACE_OWNER_ROLE } from '../../modules/identity/domain/identity.constants.js';
+} from '../../../modules/identity/domain/bootstrap-user.types.js';
+import { WORKSPACE_OWNER_ROLE } from '../../../modules/identity/domain/identity.constants.js';
 
 export class StubBootstrapUserService implements BootstrapUserExecutor {
   async execute(input: BootstrapUserInput): Promise<BootstrapUserResult> {
