@@ -9,7 +9,7 @@ import type {
   BootstrapUserResult
 } from '../modules/identity/domain/bootstrap-user.types.js';
 
-class MockBootstrapUserService implements Pick<
+class StubBootstrapUserService implements Pick<
   BootstrapUserService,
   'execute'
 > {
@@ -39,7 +39,7 @@ describe('POST /api/bootstrap', () => {
     app.use(
       '/api/bootstrap',
       createBootstrapRouter(
-        new MockBootstrapUserService() as BootstrapUserService
+        new StubBootstrapUserService() as BootstrapUserService
       )
     );
     app.use(errorMiddleware);
@@ -74,7 +74,7 @@ describe('POST /api/bootstrap', () => {
     app.use(
       '/api/bootstrap',
       createBootstrapRouter(
-        new MockBootstrapUserService() as BootstrapUserService
+        new StubBootstrapUserService() as BootstrapUserService
       )
     );
     app.use(errorMiddleware);
@@ -94,7 +94,7 @@ describe('POST /api/bootstrap', () => {
     app.use(
       '/api/bootstrap',
       createBootstrapRouter(
-        new MockBootstrapUserService() as BootstrapUserService
+        new StubBootstrapUserService() as BootstrapUserService
       )
     );
     app.use(errorMiddleware);
