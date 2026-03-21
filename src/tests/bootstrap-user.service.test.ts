@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { BootstrapUserService } from '../modules/identity/application/bootstrap-user.service.js';
-import { MockIdentityRepository } from './helpers/mock-identity-repository.js';
+import { InMemoryIdentityRepository } from './helpers/mock-identity-repository.js';
 
 describe('BootstrapUserService', () => {
   it('bootstraps a new user and workspace', async () => {
-    const repository = new MockIdentityRepository();
+    const repository = new InMemoryIdentityRepository();
     const service = new BootstrapUserService(repository);
 
     const result = await service.execute({
@@ -20,7 +20,7 @@ describe('BootstrapUserService', () => {
   });
 
   it('returns the existing workspace for an already bootstrapped user', async () => {
-    const repository = new MockIdentityRepository();
+    const repository = new InMemoryIdentityRepository();
     const service = new BootstrapUserService(repository);
 
     await service.execute({
