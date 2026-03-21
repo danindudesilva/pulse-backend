@@ -1,6 +1,7 @@
 {
   "name": "pulse-backend",
   "version": "1.0.0",
+  "type": "module",
   "main": "eslint.config.js",
   "directories": {
     "doc": "docs"
