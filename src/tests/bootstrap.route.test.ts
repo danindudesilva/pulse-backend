@@ -1,19 +1,13 @@
-import express from 'express';
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
-import { errorMiddleware } from '../lib/http/error-middleware.js';
-import { createBootstrapRouter } from '../modules/identity/api/bootstrap.route.js';
-import { StubBootstrapUserService } from './helpers/stub-bootstrap-user-service.js';
+import { createBootstrapTestApp } from './support/identity.ts/create-bootstrap-test-app.js';
+import { createApp } from '../app/app.js';
+import { createTestAppDependencies } from './support/app/test-app-deps.js';
+import { StubBootstrapUserService } from './support/identity.ts/stub-bootstrap-user-service.js';
 
 describe('POST /api/auth/bootstrap', () => {
   it('returns bootstrapped user and workspace details', async () => {
-    const app = express();
-    app.use(express.json());
-    app.use(
-      '/api/auth/bootstrap',
-      createBootstrapRouter(new StubBootstrapUserService())
-    );
-    app.use(errorMiddleware);
+    const app = createBootstrapTestApp();
 
     const response = await request(app).post('/api/auth/bootstrap').send({
       clerkUserId: 'clerk_123',
@@ -52,10 +46,12 @@ describe('POST /api/auth/bootstrap', () => {
     }
 
     const service = new CapturingStubBootstrapUserService();
-    const app = express();
-    app.use(express.json());
-    app.use('/api/auth/bootstrap', createBootstrapRouter(service));
-    app.use(errorMiddleware);
+
+    const app = createApp(
+      createTestAppDependencies({
+        bootstrapUserService: service
+      })
+    );
 
     const response = await request(app).post('/api/auth/bootstrap').send({
       clerkUserId: 'clerk_123',
@@ -70,13 +66,7 @@ describe('POST /api/auth/bootstrap', () => {
   });
 
   it('returns 400 when clerkUserId is empty', async () => {
-    const app = express();
-    app.use(express.json());
-    app.use(
-      '/api/auth/bootstrap',
-      createBootstrapRouter(new StubBootstrapUserService())
-    );
-    app.use(errorMiddleware);
+    const app = createBootstrapTestApp();
 
     const response = await request(app).post('/api/auth/bootstrap').send({
       clerkUserId: '',
@@ -99,13 +89,7 @@ describe('POST /api/auth/bootstrap', () => {
   });
 
   it('returns 400 when email is invalid', async () => {
-    const app = express();
-    app.use(express.json());
-    app.use(
-      '/api/auth/bootstrap',
-      createBootstrapRouter(new StubBootstrapUserService())
-    );
-    app.use(errorMiddleware);
+    const app = createBootstrapTestApp();
 
     const response = await request(app).post('/api/auth/bootstrap').send({
       clerkUserId: 'clerk_123',
@@ -128,13 +112,7 @@ describe('POST /api/auth/bootstrap', () => {
   });
 
   it('returns 400 when name is blank but present', async () => {
-    const app = express();
-    app.use(express.json());
-    app.use(
-      '/api/auth/bootstrap',
-      createBootstrapRouter(new StubBootstrapUserService())
-    );
-    app.use(errorMiddleware);
+    const app = createBootstrapTestApp();
 
     const response = await request(app).post('/api/auth/bootstrap').send({
       clerkUserId: 'clerk_123',
@@ -157,13 +135,7 @@ describe('POST /api/auth/bootstrap', () => {
   });
 
   it('returns 400 with fieldErrors for multiple invalid fields', async () => {
-    const app = express();
-    app.use(express.json());
-    app.use(
-      '/api/auth/bootstrap',
-      createBootstrapRouter(new StubBootstrapUserService())
-    );
-    app.use(errorMiddleware);
+    const app = createBootstrapTestApp();
 
     const response = await request(app).post('/api/auth/bootstrap').send({
       clerkUserId: '',
@@ -186,13 +158,7 @@ describe('POST /api/auth/bootstrap', () => {
   });
 
   it('returns 405 for unsupported methods', async () => {
-    const app = express();
-    app.use(express.json());
-    app.use(
-      '/api/auth/bootstrap',
-      createBootstrapRouter(new StubBootstrapUserService())
-    );
-    app.use(errorMiddleware);
+    const app = createBootstrapTestApp();
 
     const response = await request(app).get('/api/auth/bootstrap');
 

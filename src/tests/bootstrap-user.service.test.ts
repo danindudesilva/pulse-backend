@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { BootstrapUserService } from '../modules/identity/application/bootstrap-user.service.js';
-import { InMemoryIdentityRepository } from './helpers/in-memory-identity-repository.js';
+import { InMemoryIdentityRepository } from './support/identity.ts/in-memory-identity-repository.js';
 
 describe('BootstrapUserService', () => {
   it('bootstraps a new user and workspace', async () => {
