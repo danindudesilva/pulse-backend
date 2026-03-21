@@ -10,11 +10,15 @@ export function errorMiddleware(
   _next: NextFunction
 ) {
   if (error instanceof ZodError) {
+    const flattened = z.flattenError(error);
+
     return res.status(400).json({
       error: {
         code: 'VALIDATION_ERROR',
         message: 'Request validation failed',
-        details: z.flattenError(error)
+        details: {
+          fieldErrors: flattened.fieldErrors
+        }
       }
     });
   }
