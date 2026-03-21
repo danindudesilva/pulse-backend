@@ -3,7 +3,6 @@ import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 import { errorMiddleware } from '../lib/http/error-middleware.js';
 import { createBootstrapRouter } from '../modules/identity/api/bootstrap.route.js';
-import type { BootstrapUserService } from '../modules/identity/application/bootstrap-user.service.js';
 import { StubBootstrapUserService } from './helpers/stub-bootstrap-user-service.js';
 
 describe('POST /api/auth/bootstrap', () => {
@@ -12,9 +11,7 @@ describe('POST /api/auth/bootstrap', () => {
     app.use(express.json());
     app.use(
       '/api/auth/bootstrap',
-      createBootstrapRouter(
-        new StubBootstrapUserService() as BootstrapUserService
-      )
+      createBootstrapRouter(new StubBootstrapUserService())
     );
     app.use(errorMiddleware);
 
@@ -42,24 +39,150 @@ describe('POST /api/auth/bootstrap', () => {
     });
   });
 
-  it('returns 400 for invalid input', async () => {
+  it('omits name from the service input when name is undefined', async () => {
+    class CapturingStubBootstrapUserService extends StubBootstrapUserService {
+      public lastInput: unknown;
+
+      override async execute(
+        input: Parameters<StubBootstrapUserService['execute']>[0]
+      ) {
+        this.lastInput = input;
+        return super.execute(input);
+      }
+    }
+
+    const service = new CapturingStubBootstrapUserService();
+    const app = express();
+    app.use(express.json());
+    app.use('/api/auth/bootstrap', createBootstrapRouter(service));
+    app.use(errorMiddleware);
+
+    const response = await request(app).post('/api/auth/bootstrap').send({
+      clerkUserId: 'clerk_123',
+      email: 'jack@example.com'
+    });
+
+    expect(response.status).toBe(200);
+    expect(service.lastInput).toEqual({
+      clerkUserId: 'clerk_123',
+      email: 'jack@example.com'
+    });
+  });
+
+  it('returns 400 when clerkUserId is empty', async () => {
     const app = express();
     app.use(express.json());
     app.use(
       '/api/auth/bootstrap',
-      createBootstrapRouter(
-        new StubBootstrapUserService() as BootstrapUserService
-      )
+      createBootstrapRouter(new StubBootstrapUserService())
     );
     app.use(errorMiddleware);
 
     const response = await request(app).post('/api/auth/bootstrap').send({
       clerkUserId: '',
-      email: 'not-an-email'
+      email: 'jack@example.com',
+      name: 'Jack Sparrow'
     });
 
     expect(response.status).toBe(400);
-    expect(response.body.error.code).toBe('VALIDATION_ERROR');
+    expect(response.body).toEqual({
+      error: {
+        code: 'VALIDATION_ERROR',
+        message: 'Request validation failed',
+        details: {
+          fieldErrors: {
+            clerkUserId: expect.any(Array)
+          }
+        }
+      }
+    });
+  });
+
+  it('returns 400 when email is invalid', async () => {
+    const app = express();
+    app.use(express.json());
+    app.use(
+      '/api/auth/bootstrap',
+      createBootstrapRouter(new StubBootstrapUserService())
+    );
+    app.use(errorMiddleware);
+
+    const response = await request(app).post('/api/auth/bootstrap').send({
+      clerkUserId: 'clerk_123',
+      email: 'not-an-email',
+      name: 'Jack Sparrow'
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({
+      error: {
+        code: 'VALIDATION_ERROR',
+        message: 'Request validation failed',
+        details: {
+          fieldErrors: {
+            email: expect.any(Array)
+          }
+        }
+      }
+    });
+  });
+
+  it('returns 400 when name is blank but present', async () => {
+    const app = express();
+    app.use(express.json());
+    app.use(
+      '/api/auth/bootstrap',
+      createBootstrapRouter(new StubBootstrapUserService())
+    );
+    app.use(errorMiddleware);
+
+    const response = await request(app).post('/api/auth/bootstrap').send({
+      clerkUserId: 'clerk_123',
+      email: 'jack@example.com',
+      name: '   '
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({
+      error: {
+        code: 'VALIDATION_ERROR',
+        message: 'Request validation failed',
+        details: {
+          fieldErrors: {
+            name: expect.any(Array)
+          }
+        }
+      }
+    });
+  });
+
+  it('returns 400 with fieldErrors for multiple invalid fields', async () => {
+    const app = express();
+    app.use(express.json());
+    app.use(
+      '/api/auth/bootstrap',
+      createBootstrapRouter(new StubBootstrapUserService())
+    );
+    app.use(errorMiddleware);
+
+    const response = await request(app).post('/api/auth/bootstrap').send({
+      clerkUserId: '',
+      email: 'bad-email'
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({
+      error: {
+        code: 'VALIDATION_ERROR',
+        message: 'Request validation failed',
+        details: {
+          fieldErrors: {
+            clerkUserId: expect.any(Array),
+            email: expect.any(Array)
+          }
+        }
+      }
+    });
   });
 
   it('returns 405 for unsupported methods', async () => {
@@ -67,9 +190,7 @@ describe('POST /api/auth/bootstrap', () => {
     app.use(express.json());
     app.use(
       '/api/auth/bootstrap',
-      createBootstrapRouter(
-        new StubBootstrapUserService() as BootstrapUserService
-      )
+      createBootstrapRouter(new StubBootstrapUserService())
     );
     app.use(errorMiddleware);
 
