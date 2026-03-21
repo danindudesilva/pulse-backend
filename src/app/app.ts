@@ -1,7 +1,8 @@
 import express from 'express';
 import { pinoHttp } from 'pino-http';
 import { env } from '../config/env.js';
-import { healthRouter } from '../routes/health.route.js';
+import { errorMiddleware } from '../lib/http/error-middleware.js';
+import { registerRoutes } from './register-routes.js';
 
 export function createApp() {
   const app = express();
@@ -14,7 +15,9 @@ export function createApp() {
     })
   );
 
-  app.use('/health', healthRouter);
+  registerRoutes(app);
+
+  app.use(errorMiddleware);
 
   return app;
 }
