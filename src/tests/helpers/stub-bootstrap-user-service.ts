@@ -1,13 +1,9 @@
-import type { BootstrapUserService } from '../../modules/identity/application/bootstrap-user.service.js';
 import type {
   BootstrapUserInput,
   BootstrapUserResult
 } from '../../modules/identity/domain/bootstrap-user.types.js';
 
-export class StubBootstrapUserService implements Pick<
-  BootstrapUserService,
-  'execute'
-> {
+export class StubBootstrapUserService {
   async execute(input: BootstrapUserInput): Promise<BootstrapUserResult> {
     return {
       user: {
