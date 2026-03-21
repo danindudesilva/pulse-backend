@@ -19,7 +19,7 @@ export class InMemoryIdentityRepository implements IdentityRepository {
     const existing = this.users.get(input.clerkUserId);
 
     if (existing) {
-      const updated = {
+      const updated: BootstrapUserResult = {
         ...existing,
         user: {
           ...existing.user,
@@ -32,6 +32,9 @@ export class InMemoryIdentityRepository implements IdentityRepository {
       return updated;
     }
 
+    const firstName =
+      input.name?.trim().split(/\s+/)[0] ?? input.email.split('@')[0] ?? 'My';
+
     const created: BootstrapUserResult = {
       user: {
         id: 'user_1',
@@ -41,7 +44,7 @@ export class InMemoryIdentityRepository implements IdentityRepository {
       },
       workspace: {
         id: 'workspace_1',
-        name: "Jack's Workspace"
+        name: `${firstName}'s Workspace`
       },
       membership: {
         role: WORKSPACE_OWNER_ROLE

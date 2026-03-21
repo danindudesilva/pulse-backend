@@ -1,3 +1,12 @@
+import type {
+  WORKSPACE_MEMBER_ROLE,
+  WORKSPACE_OWNER_ROLE
+} from './identity.constants.js';
+
+export type BootstrapUserExecutor = {
+  execute(input: BootstrapUserInput): Promise<BootstrapUserResult>;
+};
+
 export type BootstrapUserInput = {
   clerkUserId: string;
   email: string;
@@ -16,6 +25,6 @@ export type BootstrapUserResult = {
     name: string;
   };
   membership: {
-    role: 'owner' | 'member';
+    role: typeof WORKSPACE_OWNER_ROLE | typeof WORKSPACE_MEMBER_ROLE;
   };
 };

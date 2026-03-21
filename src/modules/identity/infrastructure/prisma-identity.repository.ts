@@ -4,6 +4,8 @@ import type {
   BootstrapUserResult
 } from '../domain/bootstrap-user.types.js';
 import type { IdentityRepository } from './identity.repository.js';
+import { buildDefaultWorkspaceName } from '../domain/build-default-workspace-name.js';
+import { WORKSPACE_OWNER_ROLE } from '../domain/identity.constants.js';
 
 export class PrismaIdentityRepository implements IdentityRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -67,7 +69,7 @@ export class PrismaIdentityRepository implements IdentityRepository {
         data: {
           workspaceId: workspace.id,
           userId: user.id,
-          role: 'owner'
+          role: WORKSPACE_OWNER_ROLE
         }
       });
 
@@ -88,19 +90,4 @@ export class PrismaIdentityRepository implements IdentityRepository {
       };
     });
   }
-}
-
-function buildDefaultWorkspaceName(name: string | null, email: string): string {
-  if (name && name.trim().length > 0) {
-    const firstToken = name.trim().split(/\s+/)[0];
-    return `${firstToken}'s Workspace`;
-  }
-
-  const emailPrefix = email.split('@')[0];
-
-  if (emailPrefix && emailPrefix.trim().length > 0) {
-    return `${emailPrefix}'s Workspace`;
-  }
-
-  return 'My Workspace';
 }

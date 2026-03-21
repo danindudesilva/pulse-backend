@@ -4,13 +4,9 @@ import { asyncHandler } from '../../../lib/http/async-handler.js';
 import { validateBody } from '../../../lib/validation/validate.js';
 import { bootstrapUserBodySchema } from './bootstrap.schemas.js';
 import type {
-  BootstrapUserInput,
-  BootstrapUserResult
+  BootstrapUserExecutor,
+  BootstrapUserInput
 } from '../domain/bootstrap-user.types.js';
-
-type BootstrapUserExecutor = {
-  execute(input: BootstrapUserInput): Promise<BootstrapUserResult>;
-};
 
 export function createBootstrapRouter(service: BootstrapUserExecutor) {
   const router = Router();
