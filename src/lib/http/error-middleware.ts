@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from 'express';
-import { ZodError } from 'zod';
+import { z, ZodError } from 'zod';
 import { AppError } from '../errors/app-error.js';
 import { logger } from '../logger/logger.js';
 
@@ -14,7 +14,7 @@ export function errorMiddleware(
       error: {
         code: 'VALIDATION_ERROR',
         message: 'Request validation failed',
-        details: error.flatten()
+        details: z.flattenError(error)
       }
     });
   }
