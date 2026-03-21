@@ -2,11 +2,17 @@ import { Router } from 'express';
 import { MethodNotAllowedError } from '../../../lib/errors/app-error.js';
 import { asyncHandler } from '../../../lib/http/async-handler.js';
 import { validateBody } from '../../../lib/validation/validate.js';
-import type { BootstrapUserService } from '../application/bootstrap-user.service.js';
 import { bootstrapUserBodySchema } from './bootstrap.schemas.js';
-import type { BootstrapUserInput } from '../domain/bootstrap-user.types.js';
+import type {
+  BootstrapUserInput,
+  BootstrapUserResult
+} from '../domain/bootstrap-user.types.js';
 
-export function createBootstrapRouter(service: BootstrapUserService) {
+type BootstrapUserExecutor = {
+  execute(input: BootstrapUserInput): Promise<BootstrapUserResult>;
+};
+
+export function createBootstrapRouter(service: BootstrapUserExecutor) {
   const router = Router();
 
   router
