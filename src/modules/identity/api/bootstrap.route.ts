@@ -34,7 +34,7 @@ export function createBootstrapRouter(service: BootstrapUserExecutor) {
     .all((req, _res, next) => {
       next(
         new MethodNotAllowedError(
-          `Method ${req.method} not allowed for ${req.baseUrl || '/api/bootstrap'}`
+          `Method ${req.method} not allowed for ${req.baseUrl || '/api/auth/bootstrap'}`
         )
       );
     });

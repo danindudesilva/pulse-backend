@@ -10,5 +10,5 @@ export function registerRoutes(app: Express) {
   const bootstrapUserService = new BootstrapUserService(identityRepository);
 
   app.use('/health', healthRouter);
-  app.use('/api/bootstrap', createBootstrapRouter(bootstrapUserService));
+  app.use('/api/auth/bootstrap', createBootstrapRouter(bootstrapUserService));
 }

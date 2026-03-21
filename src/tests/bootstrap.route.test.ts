@@ -6,19 +6,19 @@ import { createBootstrapRouter } from '../modules/identity/api/bootstrap.route.j
 import type { BootstrapUserService } from '../modules/identity/application/bootstrap-user.service.js';
 import { StubBootstrapUserService } from './helpers/stub-bootstrap-user-service.js';
 
-describe('POST /api/bootstrap', () => {
+describe('POST /api/auth/bootstrap', () => {
   it('returns bootstrapped user and workspace details', async () => {
     const app = express();
     app.use(express.json());
     app.use(
-      '/api/bootstrap',
+      '/api/auth/bootstrap',
       createBootstrapRouter(
         new StubBootstrapUserService() as BootstrapUserService
       )
     );
     app.use(errorMiddleware);
 
-    const response = await request(app).post('/api/bootstrap').send({
+    const response = await request(app).post('/api/auth/bootstrap').send({
       clerkUserId: 'clerk_123',
       email: 'jack@example.com',
       name: 'Jack Sparrow'
@@ -46,14 +46,14 @@ describe('POST /api/bootstrap', () => {
     const app = express();
     app.use(express.json());
     app.use(
-      '/api/bootstrap',
+      '/api/auth/bootstrap',
       createBootstrapRouter(
         new StubBootstrapUserService() as BootstrapUserService
       )
     );
     app.use(errorMiddleware);
 
-    const response = await request(app).post('/api/bootstrap').send({
+    const response = await request(app).post('/api/auth/bootstrap').send({
       clerkUserId: '',
       email: 'not-an-email'
     });
@@ -66,20 +66,20 @@ describe('POST /api/bootstrap', () => {
     const app = express();
     app.use(express.json());
     app.use(
-      '/api/bootstrap',
+      '/api/auth/bootstrap',
       createBootstrapRouter(
         new StubBootstrapUserService() as BootstrapUserService
       )
     );
     app.use(errorMiddleware);
 
-    const response = await request(app).get('/api/bootstrap');
+    const response = await request(app).get('/api/auth/bootstrap');
 
     expect(response.status).toBe(405);
     expect(response.body).toEqual({
       error: {
         code: 'METHOD_NOT_ALLOWED',
-        message: 'Method GET not allowed for /api/bootstrap',
+        message: 'Method GET not allowed for /api/auth/bootstrap',
         details: null
       }
     });
