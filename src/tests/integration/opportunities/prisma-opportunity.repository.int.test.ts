@@ -1,10 +1,7 @@
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { ConflictError } from '../../../lib/errors/app-error.js';
 import { PrismaOpportunityRepository } from '../../../modules/opportunities/infrastructure/prisma-opportunity.repository.js';
-import {
-  disconnectPrismaTestClient,
-  prismaTestClient
-} from '../helpers/prisma-test-client.js';
+import { createPrismaTestClient } from '../helpers/prisma-test-client.js';
 import { resetDatabase } from '../helpers/reset-db.js';
 import {
   seedUser,
@@ -12,29 +9,30 @@ import {
   seedWorkspaceMember
 } from '../helpers/seed-test-data.js';
 
-describe('PrismaOpportunityRepository integration', () => {
-  const repository = new PrismaOpportunityRepository(prismaTestClient);
+const testDb = createPrismaTestClient('opportunities');
+const repository = new PrismaOpportunityRepository(testDb.prisma);
 
+describe('PrismaOpportunityRepository integration', () => {
   beforeEach(async () => {
-    await resetDatabase();
+    await resetDatabase(testDb.prisma);
   });
 
   afterAll(async () => {
-    await disconnectPrismaTestClient();
+    await testDb.disconnect();
   });
 
   it('creates an opportunity when workspace and creator exist', async () => {
-    const user = await seedUser({
+    const user = await seedUser(testDb.prisma, {
       clerkUserId: 'clerk_1',
       email: 'jack@example.com',
       name: 'Jack Sparrow'
     });
 
-    const workspace = await seedWorkspace({
+    const workspace = await seedWorkspace(testDb.prisma, {
       name: "Jack's Workspace"
     });
 
-    await seedWorkspaceMember({
+    await seedWorkspaceMember(testDb.prisma, {
       workspaceId: workspace.id,
       userId: user.id,
       role: 'owner'
@@ -54,56 +52,52 @@ describe('PrismaOpportunityRepository integration', () => {
   });
 
   it('maps missing workspace foreign key failures to ConflictError', async () => {
-    const user = await seedUser({
+    const user = await seedUser(testDb.prisma, {
       clerkUserId: 'clerk_1',
       email: 'jack@example.com',
       name: 'Jack Sparrow'
     });
 
-    await expect(
-      repository.create({
+    try {
+      await repository.create({
         workspaceId: 'missing-workspace-id',
         createdByUserId: user.id,
         title: 'Proposal',
         status: 'draft'
-      })
-    ).rejects.toThrow(ConflictError);
+      });
 
-    await expect(
-      repository.create({
-        workspaceId: 'missing-workspace-id',
-        createdByUserId: user.id,
-        title: 'Proposal',
-        status: 'draft'
-      })
-    ).rejects.toThrow('Referenced workspace does not exist');
+      throw new Error('Expected repository.create to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(ConflictError);
+      expect(error).toMatchObject({
+        message: 'Referenced workspace does not exist'
+      });
+    }
   });
 
   it('maps missing creator foreign key failures to ConflictError', async () => {
-    const workspace = await seedWorkspace({
+    const workspace = await seedWorkspace(testDb.prisma, {
       name: "Jack's Workspace"
     });
 
-    await expect(
-      repository.create({
+    try {
+      await repository.create({
         workspaceId: workspace.id,
         createdByUserId: 'missing-user-id',
         title: 'Proposal',
         status: 'draft'
-      })
-    ).rejects.toThrow(ConflictError);
+      });
 
-    await expect(
-      repository.create({
-        workspaceId: workspace.id,
-        createdByUserId: 'missing-user-id',
-        title: 'Proposal',
-        status: 'draft'
-      })
-    ).rejects.toThrow('Referenced user does not exist');
+      throw new Error('Expected repository.create to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(ConflictError);
+      expect(error).toMatchObject({
+        message: 'Referenced user does not exist'
+      });
+    }
   });
 
   it.skip('rejects creating an opportunity when the creator is not a member of the workspace', async () => {
-    // This will be enabled in PR 7 after membership integrity is enforced.
+    // enabled in the next PR
   });
 });

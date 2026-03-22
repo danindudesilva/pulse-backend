@@ -3,6 +3,7 @@ import { PrismaIdentityRepository } from '../../../modules/identity/infrastructu
 import { createPrismaTestClient } from '../helpers/prisma-test-client.js';
 import { resetDatabase } from '../helpers/reset-db.js';
 import { seedUser } from '../helpers/seed-test-data.js';
+import { ConflictError } from '../../../lib/errors/app-error.js';
 
 const testDb = createPrismaTestClient('identity');
 const repository = new PrismaIdentityRepository(testDb.prisma);
@@ -44,14 +45,19 @@ describe('PrismaIdentityRepository integration', () => {
       name: 'Existing User'
     });
 
-    await expect(
-      repository.bootstrapUser({
+    try {
+      await repository.bootstrapUser({
         clerkUserId: 'new_clerk',
         email: 'existing@example.com',
         name: 'Another User'
-      })
-    ).rejects.toMatchObject({
-      message: 'A user with this email already exists'
-    });
+      });
+
+      throw new Error('Expected bootstrapUser to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(ConflictError);
+      expect(error).toMatchObject({
+        message: 'A user with this email already exists'
+      });
+    }
   });
 });
