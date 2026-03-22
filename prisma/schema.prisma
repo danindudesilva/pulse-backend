@@ -23,6 +23,7 @@ model User {
   memberships WorkspaceMember[]
 
   @@map("users")
+  opportunitiesCreated Opportunity[] @relation("OpportunityCreatedBy")
 }
 
 model Workspace {
@@ -34,6 +35,7 @@ model Workspace {
   members   WorkspaceMember[]
 
   @@map("workspaces")
+  opportunities Opportunity[]
 }
 
 model WorkspaceMember {
@@ -53,4 +55,37 @@ model WorkspaceMember {
 enum WorkspaceRole {
   owner
   member
+}
+
+enum OpportunityStatus {
+  draft
+  sent
+  replied
+  won
+  lost
+  paused
+}
+
+model Opportunity {
+  id              String            @id @default(cuid())
+  workspaceId     String
+  createdByUserId String
+  title           String
+  companyName     String?
+  contactName     String?
+  contactEmail    String?
+  valueAmount     Decimal?          @db.Decimal(12, 2)
+  currency        String?
+  notes           String?
+  status          OpportunityStatus
+  quoteSentAt     DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  workspace        Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdBy        User             @relation("OpportunityCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict)
+
+  @@index([workspaceId, status])
+  @@index([workspaceId, createdAt])
+  @@map("opportunities")
 }
