@@ -140,9 +140,3 @@ Reset the test database container completely:
 ```bash
 npm run db:test:reset
 ```
-
-Run the full integration workflow:
-
-```bash
-npm run test:integration:full
-```
