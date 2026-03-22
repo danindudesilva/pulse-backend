@@ -7,5 +7,11 @@ export function getIntegrationDatabaseUrl(suffix: string): string {
     );
   }
 
+  if (!baseUrl.endsWith('pulse_backend_test_')) {
+    throw new Error(
+      `Integration test DATABASE_URL must end with "pulse_backend_test_". Received: ${baseUrl}`
+    );
+  }
+
   return `${baseUrl}${suffix}`;
 }
