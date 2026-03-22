@@ -1,12 +1,15 @@
-import { prismaTestClient } from './prisma-test-client.js';
+import type { PrismaClient } from '../../../generated/prisma/client.js';
 
-export async function seedUser(params: {
-  id?: string;
-  clerkUserId: string;
-  email: string;
-  name?: string | null;
-}) {
-  return prismaTestClient.user.create({
+export async function seedUser(
+  prisma: PrismaClient,
+  params: {
+    id?: string;
+    clerkUserId: string;
+    email: string;
+    name?: string | null;
+  }
+) {
+  return prisma.user.create({
     data: {
       ...(params.id ? { id: params.id } : {}),
       clerkUserId: params.clerkUserId,
@@ -16,8 +19,14 @@ export async function seedUser(params: {
   });
 }
 
-export async function seedWorkspace(params: { id?: string; name: string }) {
-  return prismaTestClient.workspace.create({
+export async function seedWorkspace(
+  prisma: PrismaClient,
+  params: {
+    id?: string;
+    name: string;
+  }
+) {
+  return prisma.workspace.create({
     data: {
       ...(params.id ? { id: params.id } : {}),
       name: params.name
@@ -25,12 +34,15 @@ export async function seedWorkspace(params: { id?: string; name: string }) {
   });
 }
 
-export async function seedWorkspaceMember(params: {
-  workspaceId: string;
-  userId: string;
-  role?: 'owner' | 'member';
-}) {
-  return prismaTestClient.workspaceMember.create({
+export async function seedWorkspaceMember(
+  prisma: PrismaClient,
+  params: {
+    workspaceId: string;
+    userId: string;
+    role?: 'owner' | 'member';
+  }
+) {
+  return prisma.workspaceMember.create({
     data: {
       workspaceId: params.workspaceId,
       userId: params.userId,
