@@ -1,21 +1,19 @@
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { PrismaIdentityRepository } from '../../../modules/identity/infrastructure/prisma-identity.repository.js';
-import {
-  disconnectPrismaTestClient,
-  prismaTestClient
-} from '../helpers/prisma-test-client.js';
+import { createPrismaTestClient } from '../helpers/prisma-test-client.js';
 import { resetDatabase } from '../helpers/reset-db.js';
 import { seedUser } from '../helpers/seed-test-data.js';
 
-describe('PrismaIdentityRepository integration', () => {
-  const repository = new PrismaIdentityRepository(prismaTestClient);
+const testDb = createPrismaTestClient('identity');
+const repository = new PrismaIdentityRepository(testDb.prisma);
 
+describe('PrismaIdentityRepository integration', () => {
   beforeEach(async () => {
-    await resetDatabase();
+    await resetDatabase(testDb.prisma);
   });
 
   afterAll(async () => {
-    await disconnectPrismaTestClient();
+    await testDb.disconnect();
   });
 
   it('creates a new user, workspace, and owner membership', async () => {
@@ -29,7 +27,7 @@ describe('PrismaIdentityRepository integration', () => {
     expect(result.workspace.name).toBe("Jack's Workspace");
     expect(result.membership.role).toBe('owner');
 
-    const membership = await prismaTestClient.workspaceMember.findFirst({
+    const membership = await testDb.prisma.workspaceMember.findFirst({
       where: {
         userId: result.user.id,
         workspaceId: result.workspace.id
@@ -40,7 +38,7 @@ describe('PrismaIdentityRepository integration', () => {
   });
 
   it('maps duplicate email conflicts to ConflictError', async () => {
-    await seedUser({
+    await seedUser(testDb.prisma, {
       clerkUserId: 'existing_clerk',
       email: 'existing@example.com',
       name: 'Existing User'
