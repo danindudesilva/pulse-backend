@@ -1,11 +1,12 @@
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 import { createApp } from '../app/app.js';
+import { createTestAppDependencies } from './support/app/test-app-deps.js';
 
 describe('health API', () => {
-  it('returns 200 OK for GET /health', async () => {
-    const app = createApp();
+  const app = createApp(createTestAppDependencies());
 
+  it('returns 200 OK for GET /health', async () => {
     const response = await request(app).get('/health');
 
     expect(response.status).toBe(200);
@@ -15,8 +16,6 @@ describe('health API', () => {
   });
 
   it('returns 405 for unsupported method on /health', async () => {
-    const app = createApp();
-
     const response = await request(app).post('/health');
 
     expect(response.status).toBe(405);
@@ -30,8 +29,6 @@ describe('health API', () => {
   });
 
   it('returns 404 JSON for unknown routes', async () => {
-    const app = createApp();
-
     const response = await request(app).get('/unknown-route');
 
     expect(response.status).toBe(404);

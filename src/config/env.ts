@@ -8,7 +8,8 @@ const envSchema = z.object({
     .enum(['development', 'test', 'production'])
     .default('development'),
   PORT: z.coerce.number().int().positive().default(4000),
-  LOG_LEVEL: z.string().default('info')
+  LOG_LEVEL: z.string().default('info'),
+  DATABASE_URL: z.string().min(1)
 });
 
 export const env = envSchema.parse(process.env);
