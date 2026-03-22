@@ -17,6 +17,8 @@ jobs:
           cache: npm
 
       - name: Install dependencies
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/pulse_backend
         run: npm ci
 
       - name: Generate Prisma client
