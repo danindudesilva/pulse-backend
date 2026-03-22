@@ -35,7 +35,7 @@ jobs:
         run: npm run test
 
       - name: Start integration test database
-        run: npm run db:test:up
+        run: npm run db:test:up:ci
 
       - name: Apply migrations to integration test databases
         env:
