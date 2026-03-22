@@ -29,10 +29,11 @@ jobs:
         run: npm run lint
 
       - name: Setup Integration Test Environment
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5433/pulse_backend_test
         run: |
-          cp .env.test.example .env.test
           npm run db:test:up
-          npm run prisma:migrate:test
+          npm run prisma:migrate:test:ci
 
       - name: Test
         run: npm run test
