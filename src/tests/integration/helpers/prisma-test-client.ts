@@ -18,8 +18,7 @@ const pool = new pg.Pool({
 const adapter = new PrismaPg(pool);
 
 export const prismaTestClient = new PrismaClient({
-  adapter,
-  log: ['error']
+  adapter
 });
 
 export async function disconnectPrismaTestClient() {
