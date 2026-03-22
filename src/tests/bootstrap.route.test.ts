@@ -4,6 +4,11 @@ import { createBootstrapTestApp } from './support/identity.ts/create-bootstrap-t
 import { createApp } from '../app/app.js';
 import { createTestAppDependencies } from './support/app/test-app-deps.js';
 import { StubBootstrapUserService } from './support/identity.ts/stub-bootstrap-user-service.js';
+import { ConflictError } from '../lib/errors/app-error.js';
+import type {
+  BootstrapUserInput,
+  BootstrapUserResult
+} from '../modules/identity/domain/bootstrap-user.types.js';
 
 describe('POST /api/auth/bootstrap', () => {
   it('returns bootstrapped user and workspace details', async () => {
@@ -157,6 +162,24 @@ describe('POST /api/auth/bootstrap', () => {
     });
   });
 
+  it('returns 400 when the request body contains invalid JSON', async () => {
+    const app = createBootstrapTestApp();
+
+    const response = await request(app)
+      .post('/api/auth/bootstrap')
+      .set('Content-Type', 'application/json')
+      .send('{"email":"someone@example.com""name":"Jack Sparrow"}');
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({
+      error: {
+        code: 'INVALID_JSON',
+        message: 'Request body contains invalid JSON',
+        details: null
+      }
+    });
+  });
+
   it('returns 405 for unsupported methods', async () => {
     const app = createBootstrapTestApp();
 
@@ -167,6 +190,38 @@ describe('POST /api/auth/bootstrap', () => {
       error: {
         code: 'METHOD_NOT_ALLOWED',
         message: 'Method GET not allowed for /api/auth/bootstrap',
+        details: null
+      }
+    });
+  });
+
+  it('returns 409 when the bootstrap flow hits a duplicate email conflict', async () => {
+    class ConflictStubBootstrapUserService extends StubBootstrapUserService {
+      override async execute(
+        _input: BootstrapUserInput
+      ): Promise<BootstrapUserResult> {
+        throw new ConflictError('A user with this email already exists');
+      }
+    }
+
+    const service = new ConflictStubBootstrapUserService();
+    const app = createApp(
+      createTestAppDependencies({
+        bootstrapUserService: service
+      })
+    );
+
+    const response = await request(app).post('/api/auth/bootstrap').send({
+      clerkUserId: 'clerk_conflict',
+      email: 'existing@example.com',
+      name: 'Jack Sparrow'
+    });
+
+    expect(response.status).toBe(409);
+    expect(response.body).toEqual({
+      error: {
+        code: 'CONFLICT',
+        message: 'A user with this email already exists',
         details: null
       }
     });
