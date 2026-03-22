@@ -19,6 +19,10 @@ cp .env.example .env
 npm run dev
 ```
 
+## Test prerequisites
+
+Integration tests require Docker to be running locally.
+
 ## Scripts
 
 ```
@@ -70,4 +74,75 @@ npm run prisma:migrate:dev
 
 ```bash
 npm run dev
+```
+
+## Testing
+
+The backend uses two testing layers:
+
+- **unit and route tests** for fast feedback without a real database
+- **integration tests** for Prisma repositories against a real PostgreSQL instance
+
+### Unit and route tests
+
+Run the default test suite with:
+
+```bash
+npm test
+```
+
+Integration tests
+
+Integration tests run against a dedicated PostgreSQL test database.
+
+1. Create the test env file
+
+```bash
+   cp .env.test.example .env.test
+```
+
+2. Start the test database
+
+```bash
+   npm run db:test:up
+```
+
+This starts a PostgreSQL container on port 5433.
+
+3. Apply migrations to the test database
+
+```bash
+   npm run prisma:migrate:test
+```
+
+4. Run the integration test suite
+
+```bash
+   npm run test:integration
+```
+
+### Common test database commands
+
+Start the test database:
+
+```bash
+npm run db:test:up
+```
+
+Stop and remove the test database volume:
+
+```bash
+npm run db:test:down
+```
+
+Reset the test database container completely:
+
+```bash
+npm run db:test:reset
+```
+
+Run the full integration workflow:
+
+```bash
+npm run test:integration:full
 ```
