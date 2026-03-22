@@ -9,6 +9,21 @@ export function errorMiddleware(
   res: Response,
   _next: NextFunction
 ) {
+  if (
+    error instanceof SyntaxError &&
+    'status' in error &&
+    error.status === 400 &&
+    'body' in error
+  ) {
+    return res.status(400).json({
+      error: {
+        code: 'INVALID_JSON',
+        message: 'Request body contains invalid JSON',
+        details: null
+      }
+    });
+  }
+
   if (error instanceof ZodError) {
     const flattened = z.flattenError(error);
 
