@@ -7,11 +7,13 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: pulse_backend_test
+      POSTGRES_DB: postgres
     ports:
-      - '5433:5432'
+      - '5432:5432'
+    volumes:
+      - ./docker/test/init-test-databases.sql:/docker-entrypoint-initdb.d/init-test-databases.sql:ro
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U postgres -d pulse_backend_test']
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d postgres']
       interval: 5s
       timeout: 5s
       retries: 10
