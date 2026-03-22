@@ -3,7 +3,7 @@ name: ci
 on: push
 
 env:
-  DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/pulse_backend?schema=public'
+  DATABASE_URL: postgresql://postgres:postgres@localhost:5432/pulse_backend
 
 jobs:
   test-and-build:
@@ -28,8 +28,24 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Test
+      - name: Run unit and route tests
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/pulse_backend?schema=public
         run: npm run test
+
+      - name: Setup Integration Test Environment
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5433/pulse_backend_test
+        run: |
+          npm run db:test:up
+          npm run prisma:migrate:test:ci
+
+      - name: Run integration tests
+        env:
+          NODE_ENV: test
+          LOG_LEVEL: silent
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5433/pulse_backend_test
+        run: npm run test:integration
 
       - name: Build
         run: npm run build
