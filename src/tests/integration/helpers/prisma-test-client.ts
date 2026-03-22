@@ -2,26 +2,29 @@ import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
 import pg from 'pg';
 import { PrismaClient } from '../../../generated/prisma/client.js';
+import { getIntegrationDatabaseUrl } from './test-database-url.js';
 
-const databaseUrl = process.env.DATABASE_URL;
+export function createPrismaTestClient(databaseSuffix: string) {
+  const databaseUrl = getIntegrationDatabaseUrl(databaseSuffix);
 
-if (!databaseUrl) {
-  throw new Error(
-    'DATABASE_URL is not set for integration tests. Load .env.test before running them.'
-  );
-}
+  const pool = new pg.Pool({
+    connectionString: databaseUrl
+  });
 
-const pool = new pg.Pool({
-  connectionString: databaseUrl
-});
+  const adapter = new PrismaPg(pool);
 
-const adapter = new PrismaPg(pool);
+  const prisma = new PrismaClient({
+    adapter
+  });
 
-export const prismaTestClient = new PrismaClient({
-  adapter
-});
+  async function disconnect() {
+    await prisma.$disconnect();
+    await pool.end();
+  }
 
-export async function disconnectPrismaTestClient() {
-  await prismaTestClient.$disconnect();
-  await pool.end();
+  return {
+    prisma,
+    disconnect,
+    databaseUrl
+  };
 }
