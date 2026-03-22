@@ -12,6 +12,7 @@ export function createApp(deps: AppDependencies) {
   app.use(express.json());
   app.use(
     pinoHttp({
+      enabled: env.NODE_ENV !== 'test',
       level: env.LOG_LEVEL
     })
   );
