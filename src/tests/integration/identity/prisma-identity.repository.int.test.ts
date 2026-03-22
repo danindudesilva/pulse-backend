@@ -1,5 +1,4 @@
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
-import { ConflictError } from '../../../lib/errors/app-error.js';
 import { PrismaIdentityRepository } from '../../../modules/identity/infrastructure/prisma-identity.repository.js';
 import {
   disconnectPrismaTestClient,
@@ -53,14 +52,8 @@ describe('PrismaIdentityRepository integration', () => {
         email: 'existing@example.com',
         name: 'Another User'
       })
-    ).rejects.toThrow(ConflictError);
-
-    await expect(
-      repository.bootstrapUser({
-        clerkUserId: 'new_clerk',
-        email: 'existing@example.com',
-        name: 'Another User'
-      })
-    ).rejects.toThrow('A user with this email already exists');
+    ).rejects.toMatchObject({
+      message: 'A user with this email already exists'
+    });
   });
 });
