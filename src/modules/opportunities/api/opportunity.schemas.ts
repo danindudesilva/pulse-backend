@@ -2,8 +2,6 @@ import { z } from 'zod';
 
 export const createOpportunityBodySchema = z
   .object({
-    workspaceId: z.string().trim().min(1),
-    createdByUserId: z.string().trim().min(1),
     title: z.string().trim().min(1).max(200),
     companyName: z.string().trim().min(1).max(200).optional(),
     contactName: z.string().trim().min(1).max(120).optional(),

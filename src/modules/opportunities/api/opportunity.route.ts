@@ -20,10 +20,11 @@ export function createOpportunityRouter(service: CreateOpportunityExecutor) {
     .post(
       asyncHandler(async (req, res) => {
         const parsed = validateBody(createOpportunityBodySchema, req);
+        const authContext = req.authContext!;
 
         const body: CreateOpportunityInput = {
-          workspaceId: parsed.workspaceId,
-          createdByUserId: parsed.createdByUserId,
+          workspaceId: authContext.workspaceId,
+          createdByUserId: authContext.userId,
           title: parsed.title,
           ...(parsed.companyName !== undefined
             ? { companyName: parsed.companyName }
