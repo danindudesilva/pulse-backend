@@ -1,24 +1,55 @@
-import { Prisma } from '../../../generated/prisma/client.js';
+import type { PrismaClient } from '../../../generated/prisma/client.js';
+import type { FollowUpRepository } from './followUp.repository.js';
 import type {
-  FollowUp,
-  PrismaClient
-} from '../../../generated/prisma/client.js';
+  CreateFollowUpInput,
+  DueFollowUpQuery,
+  FollowUpRecord,
+  MarkFollowUpsAsSentInput
+} from '../domain/followUp.types.js';
 
-export class PrismaFollowUpRepository {
+export class PrismaFollowUpRepository implements FollowUpRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
-  async createMany(followUps: Prisma.FollowUpCreateManyInput[]) {
-    await this.prisma.followUp.createMany({ data: followUps });
+  async createMany(followUps: CreateFollowUpInput[]): Promise<void> {
+    await this.prisma.followUp.createMany({
+      data: followUps.map((followUp) => ({
+        ...(followUp.id ? { id: followUp.id } : {}),
+        opportunityId: followUp.opportunityId,
+        userId: followUp.userId,
+        dueAt: followUp.dueAt,
+        sentAt: followUp.sentAt ?? null,
+        status: followUp.status ?? 'pending'
+      }))
+    });
   }
 
-  async findMany(args: Prisma.FollowUpFindManyArgs): Promise<FollowUp[]> {
-    return this.prisma.followUp.findMany(args);
+  async findDue(query: DueFollowUpQuery): Promise<FollowUpRecord[]> {
+    const rows = await this.prisma.followUp.findMany({
+      where: {
+        dueAt: { lte: query.dueAtLte },
+        ...(query.status ? { status: query.status } : {})
+      }
+    });
+
+    return rows.map((row) => ({
+      id: row.id,
+      opportunityId: row.opportunityId,
+      userId: row.userId,
+      dueAt: row.dueAt,
+      sentAt: row.sentAt,
+      status: row.status as FollowUpRecord['status']
+    }));
   }
 
-  async updateMany(args: {
-    where: Prisma.FollowUpWhereInput;
-    data: Prisma.FollowUpUpdateManyMutationInput;
-  }) {
-    return this.prisma.followUp.updateMany(args);
+  async markAsSent(input: MarkFollowUpsAsSentInput): Promise<void> {
+    await this.prisma.followUp.updateMany({
+      where: {
+        id: { in: input.ids }
+      },
+      data: {
+        status: 'sent',
+        sentAt: input.sentAt
+      }
+    });
   }
 }
