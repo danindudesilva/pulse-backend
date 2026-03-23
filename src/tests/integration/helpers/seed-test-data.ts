@@ -50,3 +50,38 @@ export async function seedWorkspaceMember(
     }
   });
 }
+
+export async function seedOpportunity(
+  prisma: PrismaClient,
+  params: {
+    id?: string;
+    workspaceId: string;
+    createdByUserId: string;
+    title: string;
+    status: 'draft' | 'sent';
+    companyName?: string | null;
+    contactName?: string | null;
+    contactEmail?: string | null;
+    valueAmount?: string | null;
+    currency?: string | null;
+    notes?: string | null;
+    quoteSentAt?: Date | null;
+  }
+) {
+  return prisma.opportunity.create({
+    data: {
+      ...(params.id ? { id: params.id } : {}),
+      workspaceId: params.workspaceId,
+      createdByUserId: params.createdByUserId,
+      title: params.title,
+      status: params.status,
+      companyName: params.companyName ?? null,
+      contactName: params.contactName ?? null,
+      contactEmail: params.contactEmail ?? null,
+      valueAmount: params.valueAmount ?? null,
+      currency: params.currency ?? null,
+      notes: params.notes ?? null,
+      quoteSentAt: params.quoteSentAt ?? null
+    }
+  });
+}
