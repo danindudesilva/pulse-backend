@@ -1,2 +1,3 @@
 CREATE DATABASE pulse_backend_test_identity;
 CREATE DATABASE pulse_backend_test_opportunities;
+CREATE DATABASE pulse_backend_test_followup;
