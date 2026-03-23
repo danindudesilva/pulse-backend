@@ -1,4 +1,4 @@
-export type FollowUpStatus = 'pending' | 'sent' | 'skipped';
+export type FollowUpStatus = 'pending' | 'sent' | 'failed' | 'skipped';
 
 export type FollowUpScheduleSource = {
   id: string;
