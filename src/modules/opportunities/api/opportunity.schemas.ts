@@ -15,6 +15,7 @@ export const createOpportunityBodySchema = z
     status: z.enum(['draft', 'sent']),
     quoteSentAt: z.iso.datetime().optional()
   })
+  .strict()
   .superRefine((value, ctx) => {
     if (value.status === 'sent' && !value.quoteSentAt) {
       ctx.addIssue({
