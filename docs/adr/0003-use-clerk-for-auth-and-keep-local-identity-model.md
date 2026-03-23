@@ -6,28 +6,55 @@ Accepted
 
 ## Context
 
-QuoteFollow needs authenticated API access but also maintains its own local user, workspace, and workspace membership data for tenancy and product behavior.
+QuoteFollow needs authenticated API access for protected product routes. The backend also maintains its own local user, workspace, and workspace membership model for tenancy and business rules.
 
 ## Decision
 
-We will use Clerk for authentication and continue to maintain a local user/workspace model in the backend.
+We will use Clerk as the authentication provider and keep a separate local identity/workspace model in the backend.
 
-## Rationale
+## Why this decision
 
-- Clerk handles authentication and session management
-- local product identity remains the source of truth for tenancy and business rules
-- backend modules can stay aligned with local domain concepts
-- future product behavior should not depend directly on external auth provider data structures
+- Authentication is not the core differentiator of the product.
+- Clerk reduces the amount of auth/session/security work we need to build and maintain ourselves.
+- The backend still needs a local user and workspace model because product behavior depends on tenancy and business-specific relationships.
+- This lets us move quickly on the MVP while keeping product identity and tenancy under our control.
+
+## Alternatives considered
+
+### 1. Build custom auth in-house
+
+Rejected for MVP.
+
+- More engineering effort
+- More security responsibility
+- Slower path to product value
+
+### 2. Use Clerk as the only user model and avoid local user/workspace records
+
+Rejected.
+
+- Product logic depends on local tenancy boundaries
+- Workspace membership and domain behavior should remain in our backend
+- Tighter coupling to provider-specific identity structures
+
+### 3. Use another auth provider (for example Auth.js / Supabase Auth)
+
+Considered, but not chosen.
+
+- Similar benefits exist across providers
+- Clerk was chosen as the current implementation path for speed and product fit
+- This decision can be revisited later if requirements change
 
 ## Consequences
 
 ### Positive
 
-- clear separation between authentication and product identity
-- local control over tenancy and business data
-- easier modular backend design
+- Faster MVP delivery
+- Less auth/session/security surface area to build ourselves
+- Local tenancy and business rules remain explicit in our backend
 
 ### Negative
 
-- bootstrap/sync flow is required between Clerk identity and local user records
-- backend must resolve Clerk user IDs to local auth context
+- We depend on an external auth provider
+- We need a bootstrap/sync flow between Clerk identity and local user records
+- Backend must resolve Clerk user IDs into local auth context
