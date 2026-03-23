@@ -1,36 +1,44 @@
+import { InvalidFollowUpIdsError } from '../domain/followUp.errors.js';
+import { DEFAULT_FOLLOW_UP_CADENCE_DAYS } from '../domain/followUp-cadence.js';
 import type {
-  Opportunity,
-  FollowUp
-} from '../../../generated/prisma/client.js';
-import type { PrismaFollowUpRepository } from '../infrastructure/prisma-followUp.repository.js';
+  FollowUpRecord,
+  FollowUpScheduleSource
+} from '../domain/followUp.types.js';
+import type { FollowUpRepository } from '../infrastructure/followUp.repository.js';
 
 export class FollowUpService {
-  constructor(private followUpRepo: PrismaFollowUpRepository) {}
+  constructor(private readonly followUpRepository: FollowUpRepository) {}
 
-  async generateDefaultFollowUps(opportunity: Opportunity) {
-    const defaultCadenceDays = [3, 7, 14];
+  async generateDefaultFollowUps(
+    opportunity: FollowUpScheduleSource
+  ): Promise<void> {
+    const now = Date.now();
 
-    const followUps = defaultCadenceDays.map((days) => ({
-      opportunityId: opportunity.id,
-      userId: opportunity.createdByUserId,
-      dueAt: new Date(Date.now() + days * 24 * 60 * 60 * 1000),
-      status: 'pending'
-    }));
-
-    await this.followUpRepo.createMany(followUps);
+    await this.followUpRepository.createMany(
+      DEFAULT_FOLLOW_UP_CADENCE_DAYS.map((days) => ({
+        opportunityId: opportunity.id,
+        userId: opportunity.createdByUserId,
+        dueAt: new Date(now + days * 24 * 60 * 60 * 1000),
+        status: 'pending'
+      }))
+    );
   }
 
-  async getDueFollowUps(): Promise<FollowUp[]> {
-    const now = new Date();
-    return this.followUpRepo.findMany({
-      where: { dueAt: { lte: now }, status: 'pending' }
+  async getDueFollowUps(): Promise<FollowUpRecord[]> {
+    return this.followUpRepository.findDue({
+      dueAtLte: new Date(),
+      status: 'pending'
     });
   }
 
-  async markAsSent(followUpIds: string[]) {
-    await this.followUpRepo.updateMany({
-      where: { id: { in: followUpIds } },
-      data: { status: 'sent', sentAt: new Date() }
+  async markAsSent(followUpIds: string[]): Promise<void> {
+    if (followUpIds.length === 0) {
+      throw new InvalidFollowUpIdsError();
+    }
+
+    await this.followUpRepository.markAsSent({
+      ids: followUpIds,
+      sentAt: new Date()
     });
   }
 }
