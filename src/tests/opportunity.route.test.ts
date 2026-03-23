@@ -1,5 +1,4 @@
 import request from 'supertest';
-import type { App } from 'supertest/types.js';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { createOpportunityTestApp } from './support/opportunities/create-opportunity-test-app.js';
 import { CapturingStubCreateOpportunityService } from './support/opportunities/capturing-stub-create-opportunity-service.js';
@@ -12,7 +11,7 @@ describe('POST /api/opportunities', () => {
     userId: 'user_1',
     workspaceId: 'ws_1'
   };
-  let app: App;
+  let app: ReturnType<typeof createOpportunityTestApp>;
 
   beforeEach(() => {
     app = createOpportunityTestApp(
