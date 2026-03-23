@@ -24,6 +24,7 @@ model User {
 
   @@map("users")
   opportunitiesCreated Opportunity[] @relation("OpportunityCreatedBy")
+  followUps FollowUp[]
 }
 
 model Workspace {
@@ -85,8 +86,25 @@ model Opportunity {
   workspace        Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   createdBy        User             @relation("OpportunityCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict)
 
+  followUps FollowUp[]
+  
   @@index([workspaceId, status])
   @@index([workspaceId, createdAt])
   @@index([workspaceId, createdByUserId])
   @@map("opportunities")
+}
+
+model FollowUp {
+  id            String      @id @default(cuid())
+  opportunityId String
+  userId        String
+  dueAt         DateTime
+  sentAt        DateTime?
+  status        String      @default("pending")
+
+  opportunity   Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([dueAt])
+  @@index([userId])
 }
