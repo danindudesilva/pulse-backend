@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { getAuth } from '@clerk/express';
 import { MethodNotAllowedError } from '../../../lib/errors/app-error.js';
 import { asyncHandler } from '../../../lib/http/async-handler.js';
 import { validateBody } from '../../../lib/validation/validate.js';
@@ -16,8 +17,9 @@ export function createBootstrapRouter(service: BootstrapUserExecutor) {
     .post(
       asyncHandler(async (req, res) => {
         const parsed = validateBody(bootstrapUserBodySchema, req);
+        const clerkUserId = getAuth(req).userId!;
         const body: BootstrapUserInput = {
-          clerkUserId: parsed.clerkUserId,
+          clerkUserId,
           email: parsed.email,
           ...(parsed.name !== undefined ? { name: parsed.name } : {})
         };
