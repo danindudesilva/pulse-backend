@@ -140,3 +140,18 @@ Reset the test database container completely:
 ```bash
 npm run db:test:reset
 ```
+
+## Known Limitations & Future Improvements
+
+### Membership Integrity
+
+- **Current state (MVP)**:
+  - The service layer enforces that a user creating an opportunity must belong to the workspace.
+  - Integration tests verify this behavior.
+  - No composite foreign key exists in the database yet.
+
+- **Future improvement**:
+  - Add a raw SQL migration to enforce a composite foreign key `(workspaceId, userId)` in the `Opportunity` table referencing `WorkspaceMember`.
+  - This will guarantee integrity even if someone bypasses the application layer or runs raw SQL queries.
+
+This ensures the backend is robust and maintains data integrity even beyond MVP usage.

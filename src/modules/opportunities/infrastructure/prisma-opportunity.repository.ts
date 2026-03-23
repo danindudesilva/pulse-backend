@@ -12,6 +12,24 @@ export class PrismaOpportunityRepository implements OpportunityRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
   async create(input: CreateOpportunityInput): Promise<OpportunitySummary> {
+    // Membership integrity check: Validate that user is member of workspace
+    // MVP Note: Composite FK not enforced at DB yet.
+    // Only app-level check exists, so this service prevents invalid inserts.
+    // Integration tests cover this behavior.
+    // TODO (post-MVP): Add a raw SQL composite FK for full DB-level enforcement.
+    const membership = await this.prisma.workspaceMember.findFirst({
+      where: {
+        userId: input.createdByUserId,
+        workspaceId: input.workspaceId
+      }
+    });
+
+    if (!membership) {
+      throw new ConflictError(
+        'User is not a member of the specified workspace'
+      );
+    }
+
     try {
       const opportunity = await this.prisma.opportunity.create({
         data: {

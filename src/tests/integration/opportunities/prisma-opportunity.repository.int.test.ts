@@ -70,7 +70,7 @@ describe('PrismaOpportunityRepository integration', () => {
     } catch (error) {
       expect(error).toBeInstanceOf(ConflictError);
       expect(error).toMatchObject({
-        message: 'Referenced workspace does not exist'
+        message: 'User is not a member of the specified workspace'
       });
     }
   });
@@ -92,12 +92,30 @@ describe('PrismaOpportunityRepository integration', () => {
     } catch (error) {
       expect(error).toBeInstanceOf(ConflictError);
       expect(error).toMatchObject({
-        message: 'Referenced user does not exist'
+        message: 'User is not a member of the specified workspace'
       });
     }
   });
 
-  it.skip('rejects creating an opportunity when the creator is not a member of the workspace', async () => {
-    // enabled in the next PR
+  it('rejects opportunity creation if creator is not a workspace member', async () => {
+    const workspace = await seedWorkspace(testDb.prisma, {
+      name: 'A Workspace'
+    });
+    const user = await seedUser(testDb.prisma, {
+      clerkUserId: 'clerk_1',
+      email: 'jack@example.com',
+      name: 'Jack Sparrow'
+    });
+
+    await expect(
+      repository.create({
+        workspaceId: workspace.id,
+        createdByUserId: user.id,
+        title: 'Proposal',
+        status: 'draft'
+      })
+    ).rejects.toMatchObject({
+      message: 'User is not a member of the specified workspace'
+    });
   });
 });
