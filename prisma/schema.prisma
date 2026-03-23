@@ -87,5 +87,6 @@ model Opportunity {
 
   @@index([workspaceId, status])
   @@index([workspaceId, createdAt])
+  @@index([workspaceId, createdByUserId])
   @@map("opportunities")
 }
