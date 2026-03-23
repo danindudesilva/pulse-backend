@@ -83,6 +83,8 @@ The backend uses two testing layers:
 - **unit and route tests** for fast feedback without a real database
 - **integration tests** for Prisma repositories against a real PostgreSQL instance
 
+Protected write APIs derive actor and workspace context server-side from authenticated Clerk requests. Client-supplied tenant and actor identifiers are intentionally not accepted for these routes.
+
 ### Unit and route tests
 
 Run the default test suite with:
