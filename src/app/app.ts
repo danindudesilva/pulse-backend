@@ -5,6 +5,7 @@ import { errorMiddleware } from '../lib/http/error-middleware.js';
 import { notFoundMiddleware } from '../lib/http/not-found-middleware.js';
 import type { AppDependencies } from './register-routes.js';
 import { registerRoutes } from './register-routes.js';
+import { clerkMiddleware } from '@clerk/express';
 
 export function createApp(deps: AppDependencies) {
   const app = express();
@@ -17,6 +18,7 @@ export function createApp(deps: AppDependencies) {
     })
   );
 
+  app.use(clerkMiddleware());
   registerRoutes(app, deps);
 
   app.use(notFoundMiddleware);

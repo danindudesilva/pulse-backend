@@ -8,6 +8,7 @@ import type { CreateOpportunityExecutor } from '../modules/opportunities/api/opp
 export type AppDependencies = {
   bootstrapUserService: BootstrapUserExecutor;
   createOpportunityService: CreateOpportunityExecutor;
+  resolveAuthContextService: ResolveAuthContextExecutor;
 };
 
 export function registerRoutes(app: Express, deps: AppDependencies) {
