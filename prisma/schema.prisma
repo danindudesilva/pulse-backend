@@ -107,4 +107,5 @@ model FollowUp {
 
   @@index([dueAt])
   @@index([userId])
+  @@map("follow_ups")
 }
