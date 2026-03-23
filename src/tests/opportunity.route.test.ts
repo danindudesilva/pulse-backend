@@ -179,7 +179,7 @@ describe('POST /api/opportunities', () => {
     });
   });
 
-  it('returns 400 when no status is sent', async () => {
+  it('returns 400 when status is missing', async () => {
     const response = await request(app).post('/api/opportunities').send({
       title: 'Proposal'
     });
