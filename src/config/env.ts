@@ -15,3 +15,13 @@ const envSchema = z.object({
 });
 
 export const env = envSchema.parse(process.env);
+
+if (env.NODE_ENV !== 'test') {
+  if (!env.CLERK_PUBLISHABLE_KEY) {
+    throw new Error('CLERK_PUBLISHABLE_KEY is required outside test');
+  }
+
+  if (!env.CLERK_SECRET_KEY) {
+    throw new Error('CLERK_SECRET_KEY is required outside test');
+  }
+}
