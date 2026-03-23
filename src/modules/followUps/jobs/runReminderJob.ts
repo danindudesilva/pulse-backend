@@ -1,3 +1,4 @@
+import { logger } from '../../../lib/logger/logger.js';
 import type { FollowUpService } from '../application/followUp.service.js';
 import type { EmailService } from '../infrastructure/email.service.stub.js';
 
@@ -15,7 +16,10 @@ export async function runReminderJob(
       );
       await followUpService.markAsSent([followUp.id]);
     } catch (err) {
-      console.error(`Failed to send follow-up ${followUp.id}:`, err);
+      logger.error(
+        { err, followUpId: followUp.id },
+        'Failed to send follow-up reminder'
+      );
       // Continue sending other follow-ups
     }
   }
