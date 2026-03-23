@@ -4,6 +4,13 @@ import { createBootstrapRouter } from '../modules/identity/api/bootstrap.route.j
 import type { BootstrapUserExecutor } from '../modules/identity/domain/bootstrap-user.types.js';
 import { createOpportunityRouter } from '../modules/opportunities/api/opportunity.route.js';
 import type { CreateOpportunityExecutor } from '../modules/opportunities/api/opportunity.route.js';
+import { createRequireAuthContextMiddleware } from '../modules/auth/api/require-auth-context.middleware.js';
+import { requireClerkAuth } from '../modules/auth/api/require-clerk-auth.middleware.js';
+import type { AuthContext } from '../modules/auth/domain/auth-context.types.js';
+
+type ResolveAuthContextExecutor = {
+  execute(input: { clerkUserId: string }): Promise<AuthContext>;
+};
 
 export type AppDependencies = {
   bootstrapUserService: BootstrapUserExecutor;
@@ -12,13 +19,21 @@ export type AppDependencies = {
 };
 
 export function registerRoutes(app: Express, deps: AppDependencies) {
+  const requireAuthContext = createRequireAuthContextMiddleware(
+    deps.resolveAuthContextService
+  );
+
   app.use('/health', healthRouter);
+
   app.use(
     '/api/auth/bootstrap',
+    requireClerkAuth,
     createBootstrapRouter(deps.bootstrapUserService)
   );
+
   app.use(
     '/api/opportunities',
+    requireAuthContext,
     createOpportunityRouter(deps.createOpportunityService)
   );
 }
