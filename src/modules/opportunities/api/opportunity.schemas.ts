@@ -25,3 +25,32 @@ export const createOpportunityBodySchema = z
       });
     }
   });
+
+export const listOpportunitiesQuerySchema = z
+  .object({
+    view: z.enum(['all', 'due', 'upcoming']).optional(),
+    status: z
+      .enum(['draft', 'sent', 'replied', 'won', 'lost', 'paused'])
+      .optional()
+  })
+  .strict();
+
+export const opportunityParamsSchema = z.object({
+  opportunityId: z.string().trim().min(1)
+});
+
+export const updateOpportunityStatusBodySchema = z
+  .object({
+    status: z.enum(['draft', 'sent', 'replied', 'won', 'lost', 'paused']),
+    quoteSentAt: z.iso.datetime().optional()
+  })
+  .strict()
+  .superRefine((value, ctx) => {
+    if (value.status === 'sent' && !value.quoteSentAt) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['quoteSentAt'],
+        message: 'quoteSentAt is required when status is sent'
+      });
+    }
+  });
