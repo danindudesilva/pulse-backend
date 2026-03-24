@@ -143,6 +143,54 @@ Reset the test database container completely:
 npm run db:test:reset
 ```
 
+## Opportunity list and status APIs
+
+Protected opportunity APIs derive workspace and actor context server-side from authenticated request context.
+
+### List opportunities
+
+```http
+GET /api/opportunities
+GET /api/opportunities?view=due
+GET /api/opportunities?view=upcoming
+GET /api/opportunities?status=sent
+```
+
+Supported view values:
+
+- all
+- due
+- upcoming
+
+Get one opportunity
+
+```http
+GET /api/opportunities/:opportunityId
+```
+
+Update opportunity status
+
+```http
+PATCH /api/opportunities/:opportunityId/status
+```
+
+Example request body:
+
+```json
+{
+  "status": "replied"
+}
+```
+
+If setting status to sent, quoteSentAt is required:
+
+```json
+{
+  "status": "sent",
+  "quoteSentAt": "2026-03-24T10:00:00.000Z"
+}
+```
+
 ## Known Limitations & Future Improvements
 
 ### Membership Integrity
@@ -157,3 +205,7 @@ npm run db:test:reset
   - This will guarantee integrity even if someone bypasses the application layer or runs raw SQL queries.
 
 This ensures the backend is robust and maintains data integrity even beyond MVP usage.
+
+```
+
+```
