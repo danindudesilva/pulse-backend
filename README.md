@@ -106,7 +106,7 @@ Integration tests run against a dedicated PostgreSQL test database.
 2. Start the test database
 
 ```bash
-   npm run db:test:up
+   npm run db:test:up:ci
 ```
 
 This starts a PostgreSQL container on port 5433.
@@ -190,6 +190,8 @@ If setting status to sent, quoteSentAt is required:
   "quoteSentAt": "2026-03-24T10:00:00.000Z"
 }
 ```
+
+Creating an opportunity also generates the default follow-up schedule atomically. If follow-up generation fails, the opportunity creation is rolled back and no partial data is persisted.
 
 ## Known Limitations & Future Improvements
 
