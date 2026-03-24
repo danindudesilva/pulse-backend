@@ -15,6 +15,11 @@ import type {
 } from '../domain/opportunity.types.js';
 import type { OpportunityRepository } from './opportunity.repository.js';
 
+type PrismaOpportunityRepositoryClient = Pick<
+  PrismaClient,
+  'opportunity' | 'workspaceMember' | 'workspace' | 'user'
+>;
+
 type OpportunityWithPendingFollowUps = Opportunity & {
   followUps: Pick<FollowUp, 'dueAt'>[];
 };
@@ -46,7 +51,7 @@ function toOpportunitySummary(
 }
 
 export class PrismaOpportunityRepository implements OpportunityRepository {
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(private readonly prisma: PrismaOpportunityRepositoryClient) {}
 
   async create(input: CreateOpportunityInput): Promise<OpportunitySummary> {
     // Membership integrity check: Validate that user is member of workspace

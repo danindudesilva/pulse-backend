@@ -7,8 +7,10 @@ import type {
   MarkFollowUpsAsSentInput
 } from '../domain/followUp.types.js';
 
+type PrismaFollowUpRepositoryClient = Pick<PrismaClient, 'followUp'>;
+
 export class PrismaFollowUpRepository implements FollowUpRepository {
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(private readonly prisma: PrismaFollowUpRepositoryClient) {}
 
   async createMany(followUps: CreateFollowUpInput[]): Promise<void> {
     await this.prisma.followUp.createMany({
