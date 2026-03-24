@@ -19,6 +19,7 @@ export class StubCreateOpportunityService implements CreateOpportunityExecutor {
       notes: input.notes ?? null,
       status: input.status,
       quoteSentAt: input.quoteSentAt ?? null,
+      nextFollowUpAt: null,
       createdAt: new Date('2026-03-22T10:00:00.000Z'),
       updatedAt: new Date('2026-03-22T10:00:00.000Z')
     };
