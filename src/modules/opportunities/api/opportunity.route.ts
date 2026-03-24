@@ -1,5 +1,8 @@
 import { Router } from 'express';
-import { MethodNotAllowedError } from '../../../lib/errors/app-error.js';
+import {
+  MethodNotAllowedError,
+  UnauthorizedError
+} from '../../../lib/errors/app-error.js';
 import { asyncHandler } from '../../../lib/http/async-handler.js';
 import { validateBody } from '../../../lib/validation/validate.js';
 import type {
@@ -19,11 +22,15 @@ export function createOpportunityRouter(service: CreateOpportunityExecutor) {
     .route('/')
     .post(
       asyncHandler(async (req, res) => {
+        if (!req.authContext) {
+          throw new UnauthorizedError('Authentication required');
+        }
+
         const parsed = validateBody(createOpportunityBodySchema, req);
 
         const body: CreateOpportunityInput = {
-          workspaceId: parsed.workspaceId,
-          createdByUserId: parsed.createdByUserId,
+          workspaceId: req.authContext.workspaceId,
+          createdByUserId: req.authContext.userId,
           title: parsed.title,
           ...(parsed.companyName !== undefined
             ? { companyName: parsed.companyName }

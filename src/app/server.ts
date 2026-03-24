@@ -5,6 +5,8 @@ import { BootstrapUserService } from '../modules/identity/application/bootstrap-
 import { PrismaIdentityRepository } from '../modules/identity/infrastructure/prisma-identity.repository.js';
 import { CreateOpportunityService } from '../modules/opportunities/application/create-opportunity.service.js';
 import { PrismaOpportunityRepository } from '../modules/opportunities/infrastructure/prisma-opportunity.repository.js';
+import { ResolveAuthContextService } from '../modules/auth/application/resolve-auth-context.service.js';
+import { PrismaLocalAuthRepository } from '../modules/auth/infrastructure/prisma-local-auth.repository.js';
 
 const identityRepository = new PrismaIdentityRepository(prisma);
 const bootstrapUserService = new BootstrapUserService(identityRepository);
@@ -14,9 +16,15 @@ const createOpportunityService = new CreateOpportunityService(
   opportunityRepository
 );
 
+const localAuthRepository = new PrismaLocalAuthRepository(prisma);
+const resolveAuthContextService = new ResolveAuthContextService(
+  localAuthRepository
+);
+
 const app = createApp({
   bootstrapUserService,
-  createOpportunityService
+  createOpportunityService,
+  resolveAuthContextService
 });
 
 app.listen(env.PORT, () => {

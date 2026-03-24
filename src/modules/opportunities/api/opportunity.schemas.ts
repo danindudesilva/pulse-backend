@@ -2,8 +2,6 @@ import { z } from 'zod';
 
 export const createOpportunityBodySchema = z
   .object({
-    workspaceId: z.string().trim().min(1),
-    createdByUserId: z.string().trim().min(1),
     title: z.string().trim().min(1).max(200),
     companyName: z.string().trim().min(1).max(200).optional(),
     contactName: z.string().trim().min(1).max(120).optional(),
@@ -17,6 +15,7 @@ export const createOpportunityBodySchema = z
     status: z.enum(['draft', 'sent']),
     quoteSentAt: z.iso.datetime().optional()
   })
+  .strict()
   .superRefine((value, ctx) => {
     if (value.status === 'sent' && !value.quoteSentAt) {
       ctx.addIssue({

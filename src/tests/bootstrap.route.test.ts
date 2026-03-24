@@ -1,5 +1,5 @@
 import request from 'supertest';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createBootstrapTestApp } from './support/identity.ts/create-bootstrap-test-app.js';
 import { createApp } from '../app/app.js';
 import { createTestAppDependencies } from './support/app/test-app-deps.js';
@@ -10,12 +10,76 @@ import type {
   BootstrapUserResult
 } from '../modules/identity/domain/bootstrap-user.types.js';
 
+vi.mock('@clerk/express', () => ({
+  getAuth: vi.fn(),
+  clerkMiddleware: () => (_req: unknown, _res: unknown, next: () => void) =>
+    next()
+}));
+
+import { getAuth } from '@clerk/express';
+
 describe('POST /api/auth/bootstrap', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    vi.mocked(getAuth).mockReturnValue({
+      userId: 'clerk_123'
+    } as never);
+  });
+
+  it('returns 401 when bootstrap is called without authenticated Clerk context', async () => {
+    vi.mocked(getAuth).mockReturnValue({
+      userId: null
+    } as never);
+
+    const app = createBootstrapTestApp();
+    const response = await request(app).post('/api/auth/bootstrap').send({
+      email: 'jack@example.com',
+      name: 'Jack Sparrow'
+    });
+
+    expect(response.status).toBe(401);
+    expect(response.body).toEqual({
+      error: {
+        code: 'UNAUTHORIZED',
+        message: 'Authentication required',
+        details: null
+      }
+    });
+  });
+
+  it('uses authenticated Clerk user id when bootstrapping local user', async () => {
+    class CapturingStubBootstrapUserService extends StubBootstrapUserService {
+      public lastInput: unknown;
+
+      override async execute(
+        input: Parameters<StubBootstrapUserService['execute']>[0]
+      ) {
+        this.lastInput = input;
+        return super.execute(input);
+      }
+    }
+
+    const service = new CapturingStubBootstrapUserService();
+    const app = createBootstrapTestApp(service);
+
+    const response = await request(app).post('/api/auth/bootstrap').send({
+      email: 'jack@example.com',
+      name: 'Jack Sparrow'
+    });
+
+    expect(response.status).toBe(200);
+    expect(service.lastInput).toEqual({
+      clerkUserId: 'clerk_123',
+      email: 'jack@example.com',
+      name: 'Jack Sparrow'
+    });
+  });
+
   it('returns bootstrapped user and workspace details', async () => {
     const app = createBootstrapTestApp();
 
     const response = await request(app).post('/api/auth/bootstrap').send({
-      clerkUserId: 'clerk_123',
       email: 'jack@example.com',
       name: 'Jack Sparrow'
     });
@@ -59,7 +123,6 @@ describe('POST /api/auth/bootstrap', () => {
     );
 
     const response = await request(app).post('/api/auth/bootstrap').send({
-      clerkUserId: 'clerk_123',
       email: 'jack@example.com'
     });
 
@@ -70,34 +133,10 @@ describe('POST /api/auth/bootstrap', () => {
     });
   });
 
-  it('returns 400 when clerkUserId is empty', async () => {
-    const app = createBootstrapTestApp();
-
-    const response = await request(app).post('/api/auth/bootstrap').send({
-      clerkUserId: '',
-      email: 'jack@example.com',
-      name: 'Jack Sparrow'
-    });
-
-    expect(response.status).toBe(400);
-    expect(response.body).toEqual({
-      error: {
-        code: 'VALIDATION_ERROR',
-        message: 'Request validation failed',
-        details: {
-          fieldErrors: {
-            clerkUserId: expect.any(Array)
-          }
-        }
-      }
-    });
-  });
-
   it('returns 400 when email is invalid', async () => {
     const app = createBootstrapTestApp();
 
     const response = await request(app).post('/api/auth/bootstrap').send({
-      clerkUserId: 'clerk_123',
       email: 'not-an-email',
       name: 'Jack Sparrow'
     });
@@ -143,8 +182,8 @@ describe('POST /api/auth/bootstrap', () => {
     const app = createBootstrapTestApp();
 
     const response = await request(app).post('/api/auth/bootstrap').send({
-      clerkUserId: '',
-      email: 'bad-email'
+      email: 'bad-email',
+      name: ''
     });
 
     expect(response.status).toBe(400);
@@ -154,7 +193,7 @@ describe('POST /api/auth/bootstrap', () => {
         message: 'Request validation failed',
         details: {
           fieldErrors: {
-            clerkUserId: expect.any(Array),
+            name: expect.any(Array),
             email: expect.any(Array)
           }
         }
@@ -212,7 +251,6 @@ describe('POST /api/auth/bootstrap', () => {
     );
 
     const response = await request(app).post('/api/auth/bootstrap').send({
-      clerkUserId: 'clerk_conflict',
       email: 'existing@example.com',
       name: 'Jack Sparrow'
     });
