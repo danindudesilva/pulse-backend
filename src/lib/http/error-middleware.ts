@@ -32,7 +32,10 @@ export function errorMiddleware(
         code: 'VALIDATION_ERROR',
         message: 'Request validation failed',
         details: {
-          fieldErrors: flattened.fieldErrors
+          fieldErrors: flattened.fieldErrors,
+          ...(flattened.formErrors.length > 0
+            ? { formErrors: flattened.formErrors }
+            : {})
         }
       }
     });

@@ -61,6 +61,10 @@ describe('POST /api/opportunities', () => {
 
     expect(response.status).toBe(400);
     expect(response.body.error.code).toBe('VALIDATION_ERROR');
+    expect(response.body.error.details).toEqual({
+      fieldErrors: {},
+      formErrors: [expect.stringContaining('Unrecognized keys')]
+    });
   });
 
   it('creates a draft opportunity', async () => {
