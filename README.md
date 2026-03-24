@@ -128,19 +128,7 @@ This starts a PostgreSQL container on port 5433.
 Start the test database:
 
 ```bash
-npm run db:test:up
-```
-
-Stop and remove the test database volume:
-
-```bash
-npm run db:test:down
-```
-
-Reset the test database container completely:
-
-```bash
-npm run db:test:reset
+npm run db:test:up:ci
 ```
 
 ## Opportunity list and status APIs
