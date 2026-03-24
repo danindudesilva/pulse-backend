@@ -17,6 +17,14 @@ export const createOpportunityBodySchema = z
   })
   .strict()
   .superRefine((value, ctx) => {
+    if (value.status !== 'sent' && value.quoteSentAt !== undefined) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['quoteSentAt'],
+        message: 'quoteSentAt is only allowed when status is sent'
+      });
+    }
+
     if (value.status === 'sent' && !value.quoteSentAt) {
       ctx.addIssue({
         code: 'custom',

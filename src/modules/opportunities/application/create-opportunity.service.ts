@@ -1,6 +1,7 @@
 import {
   InvalidInitialOpportunityStatusError,
   QuoteSentAtInFutureError,
+  QuoteSentAtOnlyAllowedForSentStatusError,
   QuoteSentAtRequiredError
 } from '../domain/opportunity.errors.js';
 import type {
@@ -15,6 +16,10 @@ export class CreateOpportunityService {
   async execute(input: CreateOpportunityInput): Promise<OpportunitySummary> {
     if (input.status !== 'draft' && input.status !== 'sent') {
       throw new InvalidInitialOpportunityStatusError();
+    }
+
+    if (input.status !== 'sent' && input.quoteSentAt !== undefined) {
+      throw new QuoteSentAtOnlyAllowedForSentStatusError();
     }
 
     if (input.status === 'sent' && !input.quoteSentAt) {
