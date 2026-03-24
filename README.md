@@ -205,7 +205,3 @@ If setting status to sent, quoteSentAt is required:
   - This will guarantee integrity even if someone bypasses the application layer or runs raw SQL queries.
 
 This ensures the backend is robust and maintains data integrity even beyond MVP usage.
-
-```
-
-```
