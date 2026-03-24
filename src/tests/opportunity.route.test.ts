@@ -15,7 +15,7 @@ describe('POST /api/opportunities', () => {
 
   beforeEach(() => {
     app = createOpportunityTestApp(
-      new StubCreateOpportunityService(),
+      { createOpportunityService: new StubCreateOpportunityService() },
       defaultAuthContext
     );
   });
@@ -32,7 +32,10 @@ describe('POST /api/opportunities', () => {
 
   it('derives workspaceId and createdByUserId from auth context', async () => {
     const service = new CapturingStubCreateOpportunityService();
-    const app = createOpportunityTestApp(service, defaultAuthContext);
+    const app = createOpportunityTestApp(
+      { createOpportunityService: service },
+      defaultAuthContext
+    );
 
     const response = await request(app).post('/api/opportunities').send({
       title: 'Proposal',
@@ -78,7 +81,10 @@ describe('POST /api/opportunities', () => {
 
   it('normalizes currency to uppercase', async () => {
     const service = new CapturingStubCreateOpportunityService();
-    const app = createOpportunityTestApp(service, defaultAuthContext);
+    const app = createOpportunityTestApp(
+      { createOpportunityService: service },
+      defaultAuthContext
+    );
 
     const response = await request(app).post('/api/opportunities').send({
       title: 'Proposal',
@@ -129,7 +135,10 @@ describe('POST /api/opportunities', () => {
     }
 
     const app = createOpportunityTestApp(
-      new RejectingCreateOpportunityService() as never,
+      {
+        createOpportunityService:
+          new RejectingCreateOpportunityService() as never
+      },
       defaultAuthContext
     );
 
@@ -285,7 +294,10 @@ describe('POST /api/opportunities', () => {
 
   it('parses quoteSentAt into a Date before calling the service', async () => {
     const service = new CapturingStubCreateOpportunityService();
-    const app = createOpportunityTestApp(service, defaultAuthContext);
+    const app = createOpportunityTestApp(
+      { createOpportunityService: service },
+      defaultAuthContext
+    );
 
     const response = await request(app).post('/api/opportunities').send({
       title: 'Proposal',
@@ -303,7 +315,10 @@ describe('POST /api/opportunities', () => {
 
   it('omits optional fields from the service input when they are undefined', async () => {
     const service = new CapturingStubCreateOpportunityService();
-    const app = createOpportunityTestApp(service, defaultAuthContext);
+    const app = createOpportunityTestApp(
+      { createOpportunityService: service },
+      defaultAuthContext
+    );
 
     const response = await request(app).post('/api/opportunities').send({
       title: 'Proposal',
@@ -320,13 +335,13 @@ describe('POST /api/opportunities', () => {
   });
 
   it('returns 405 for unsupported methods', async () => {
-    const response = await request(app).get('/api/opportunities');
+    const response = await request(app).delete('/api/opportunities');
 
     expect(response.status).toBe(405);
     expect(response.body).toEqual({
       error: {
         code: 'METHOD_NOT_ALLOWED',
-        message: 'Method GET not allowed for /api/opportunities',
+        message: 'Method DELETE not allowed for /api/opportunities',
         details: null
       }
     });
