@@ -27,6 +27,27 @@ export type OpportunitySummary = {
   notes: string | null;
   status: OpportunityStatus;
   quoteSentAt: Date | null;
+  nextFollowUpAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
+};
+
+export type OpportunityListView = 'all' | 'due' | 'upcoming';
+
+export type ListOpportunitiesInput = {
+  workspaceId: string;
+  view?: OpportunityListView;
+  status?: OpportunityStatus;
+};
+
+export type GetOpportunityInput = {
+  workspaceId: string;
+  opportunityId: string;
+};
+
+export type UpdateOpportunityStatusInput = {
+  workspaceId: string;
+  opportunityId: string;
+  status: OpportunityStatus;
+  quoteSentAt?: Date;
 };
