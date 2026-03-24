@@ -72,6 +72,30 @@ describe('PATCH /api/opportunities/:opportunityId/status', () => {
     expect(response.body.error.code).toBe('VALIDATION_ERROR');
   });
 
+  it('returns 400 when quoteSentAt is in the future', async () => {
+    const app = createOpportunityTestApp(undefined, defaultAuthContext);
+    const future = new Date(Date.now() + 60_000).toISOString();
+
+    const response = await request(app).post('/api/opportunities').send({
+      title: 'Proposal',
+      status: 'sent',
+      quoteSentAt: future
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({
+      error: {
+        code: 'VALIDATION_ERROR',
+        message: 'Request validation failed',
+        details: {
+          fieldErrors: {
+            quoteSentAt: ['quoteSentAt cannot be in the future']
+          }
+        }
+      }
+    });
+  });
+
   it('returns 400 when the service rejects an invalid status transition', async () => {
     class RejectingUpdateOpportunityStatusService {
       async execute() {

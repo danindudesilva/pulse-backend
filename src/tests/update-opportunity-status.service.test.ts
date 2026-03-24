@@ -102,6 +102,22 @@ describe('UpdateOpportunityStatusService', () => {
     ).rejects.toBeInstanceOf(QuoteSentAtRequiredError);
   });
 
+  it('rejects sent status when quoteSentAt is in the future', async () => {
+    const repository = new InMemoryOpportunityRepository(
+      buildOpportunity('draft')
+    );
+    const service = new UpdateOpportunityStatusService(repository);
+
+    await expect(
+      service.execute({
+        workspaceId: 'ws_1',
+        opportunityId: 'opp_1',
+        status: 'sent',
+        quoteSentAt: new Date(Date.now() + 60_000)
+      })
+    ).rejects.toThrow('quoteSentAt cannot be in the future');
+  });
+
   it('rejects invalid status transitions', async () => {
     const repository = new InMemoryOpportunityRepository(
       buildOpportunity('draft')
