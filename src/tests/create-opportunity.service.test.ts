@@ -88,6 +88,21 @@ describe('CreateOpportunityService', () => {
     ).rejects.toThrow('quoteSentAt is required when status is sent');
   });
 
+  it('requires quoteSentAt to be in the future', async () => {
+    const repository = new InMemoryOpportunityRepository();
+    const service = new CreateOpportunityService(repository);
+
+    await expect(
+      service.execute({
+        workspaceId: 'ws_1',
+        createdByUserId: 'user_1',
+        title: 'Sent with past date',
+        status: 'sent',
+        quoteSentAt: new Date(Date.now() + 60_000)
+      })
+    ).rejects.toThrow('quoteSentAt cannot be in the future');
+  });
+
   it('does not call the repository when status is sent without quoteSentAt', async () => {
     const repository = new SpyOpportunityRepository();
     const service = new CreateOpportunityService(repository);
