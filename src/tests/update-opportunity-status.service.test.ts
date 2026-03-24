@@ -3,84 +3,27 @@ import { UpdateOpportunityStatusService } from '../modules/opportunities/applica
 import {
   InvalidOpportunityStatusTransitionError,
   OpportunityNotFoundError,
+  QuoteSentAtInFutureError,
   QuoteSentAtRequiredError
 } from '../modules/opportunities/domain/opportunity.errors.js';
-import type { OpportunityRepository } from '../modules/opportunities/infrastructure/opportunity.repository.js';
-import type {
-  CreateOpportunityInput,
-  GetOpportunityInput,
-  ListOpportunitiesInput,
-  OpportunitySummary,
-  UpdateOpportunityStatusInput
-} from '../modules/opportunities/domain/opportunity.types.js';
-
-class InMemoryOpportunityRepository implements OpportunityRepository {
-  constructor(private readonly opportunity: OpportunitySummary | null) {}
-
-  async create(_input: CreateOpportunityInput): Promise<OpportunitySummary> {
-    throw new Error('Not implemented');
-  }
-
-  async listByWorkspace(
-    _input: ListOpportunitiesInput
-  ): Promise<OpportunitySummary[]> {
-    return [];
-  }
-
-  async findByIdInWorkspace(
-    _input: GetOpportunityInput
-  ): Promise<OpportunitySummary | null> {
-    return this.opportunity;
-  }
-
-  async updateStatus(
-    input: UpdateOpportunityStatusInput
-  ): Promise<OpportunitySummary | null> {
-    if (!this.opportunity) return null;
-
-    return {
-      ...this.opportunity,
-      status: input.status,
-      quoteSentAt:
-        input.status === 'sent'
-          ? (input.quoteSentAt ?? null)
-          : this.opportunity.quoteSentAt
-    };
-  }
-}
-
-function buildOpportunity(
-  status: OpportunitySummary['status']
-): OpportunitySummary {
-  return {
-    id: 'opp_1',
-    workspaceId: 'ws_1',
-    createdByUserId: 'user_1',
-    title: 'Proposal',
-    companyName: null,
-    contactName: null,
-    contactEmail: null,
-    valueAmount: null,
-    currency: null,
-    notes: null,
-    status,
-    quoteSentAt: null,
-    nextFollowUpAt: null,
-    createdAt: new Date('2026-03-24T10:00:00.000Z'),
-    updatedAt: new Date('2026-03-24T10:00:00.000Z')
-  };
-}
+import { InMemoryOpportunityRepository } from './support/opportunities/test-opportunity-repositories.js';
 
 describe('UpdateOpportunityStatusService', () => {
   it('updates a valid status transition', async () => {
-    const repository = new InMemoryOpportunityRepository(
-      buildOpportunity('sent')
-    );
+    const repository = new InMemoryOpportunityRepository();
     const service = new UpdateOpportunityStatusService(repository);
+
+    const created = await repository.create({
+      workspaceId: 'ws_1',
+      createdByUserId: 'user_1',
+      title: 'Proposal',
+      status: 'sent',
+      quoteSentAt: new Date('2026-03-22T10:00:00.000Z')
+    });
 
     const result = await service.execute({
       workspaceId: 'ws_1',
-      opportunityId: 'opp_1',
+      opportunityId: created.id,
       status: 'replied'
     });
 
@@ -88,61 +31,121 @@ describe('UpdateOpportunityStatusService', () => {
   });
 
   it('requires quoteSentAt when transitioning to sent', async () => {
-    const repository = new InMemoryOpportunityRepository(
-      buildOpportunity('draft')
-    );
+    const repository = new InMemoryOpportunityRepository();
     const service = new UpdateOpportunityStatusService(repository);
+
+    const created = await repository.create({
+      workspaceId: 'ws_1',
+      createdByUserId: 'user_1',
+      title: 'Proposal',
+      status: 'draft'
+    });
 
     await expect(
       service.execute({
         workspaceId: 'ws_1',
-        opportunityId: 'opp_1',
+        opportunityId: created.id,
         status: 'sent'
       })
     ).rejects.toBeInstanceOf(QuoteSentAtRequiredError);
   });
 
   it('rejects sent status when quoteSentAt is in the future', async () => {
-    const repository = new InMemoryOpportunityRepository(
-      buildOpportunity('draft')
-    );
+    const repository = new InMemoryOpportunityRepository();
     const service = new UpdateOpportunityStatusService(repository);
+
+    const created = await repository.create({
+      workspaceId: 'ws_1',
+      createdByUserId: 'user_1',
+      title: 'Proposal',
+      status: 'draft'
+    });
 
     await expect(
       service.execute({
         workspaceId: 'ws_1',
-        opportunityId: 'opp_1',
+        opportunityId: created.id,
         status: 'sent',
         quoteSentAt: new Date(Date.now() + 60_000)
       })
-    ).rejects.toThrow('quoteSentAt cannot be in the future');
+    ).rejects.toBeInstanceOf(QuoteSentAtInFutureError);
   });
 
   it('rejects invalid status transitions', async () => {
-    const repository = new InMemoryOpportunityRepository(
-      buildOpportunity('draft')
-    );
+    const repository = new InMemoryOpportunityRepository();
     const service = new UpdateOpportunityStatusService(repository);
+
+    const created = await repository.create({
+      workspaceId: 'ws_1',
+      createdByUserId: 'user_1',
+      title: 'Proposal',
+      status: 'draft'
+    });
 
     await expect(
       service.execute({
         workspaceId: 'ws_1',
-        opportunityId: 'opp_1',
+        opportunityId: created.id,
         status: 'won'
       })
     ).rejects.toBeInstanceOf(InvalidOpportunityStatusTransitionError);
   });
 
-  it('throws when opportunity is not found', async () => {
-    const repository = new InMemoryOpportunityRepository(null);
+  it('throws when the opportunity is not found', async () => {
+    const repository = new InMemoryOpportunityRepository();
     const service = new UpdateOpportunityStatusService(repository);
 
     await expect(
       service.execute({
         workspaceId: 'ws_1',
-        opportunityId: 'opp_missing',
+        opportunityId: 'missing_opp',
         status: 'won'
       })
     ).rejects.toBeInstanceOf(OpportunityNotFoundError);
+  });
+
+  it('throws when the opportunity exists in another workspace', async () => {
+    const repository = new InMemoryOpportunityRepository();
+    const service = new UpdateOpportunityStatusService(repository);
+
+    const created = await repository.create({
+      workspaceId: 'ws_1',
+      createdByUserId: 'user_1',
+      title: 'Proposal',
+      status: 'sent',
+      quoteSentAt: new Date('2026-03-22T10:00:00.000Z')
+    });
+
+    await expect(
+      service.execute({
+        workspaceId: 'ws_2',
+        opportunityId: created.id,
+        status: 'replied'
+      })
+    ).rejects.toBeInstanceOf(OpportunityNotFoundError);
+  });
+
+  it('sets quoteSentAt when transitioning to sent from paused', async () => {
+    const repository = new InMemoryOpportunityRepository();
+    const service = new UpdateOpportunityStatusService(repository);
+
+    const created = await repository.create({
+      workspaceId: 'ws_1',
+      createdByUserId: 'user_1',
+      title: 'Proposal',
+      status: 'paused'
+    });
+
+    const quoteSentAt = new Date('2026-03-24T10:00:00.000Z');
+
+    const result = await service.execute({
+      workspaceId: 'ws_1',
+      opportunityId: created.id,
+      status: 'sent',
+      quoteSentAt
+    });
+
+    expect(result.status).toBe('sent');
+    expect(result.quoteSentAt).toEqual(quoteSentAt);
   });
 });
