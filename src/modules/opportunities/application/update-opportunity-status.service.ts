@@ -1,6 +1,7 @@
 import {
   InvalidOpportunityStatusTransitionError,
   OpportunityNotFoundError,
+  QuoteSentAtInFutureError,
   QuoteSentAtRequiredError
 } from '../domain/opportunity.errors.js';
 import { canTransitionOpportunityStatus } from '../domain/opportunity-status-transitions.js';
@@ -34,6 +35,14 @@ export class UpdateOpportunityStatusService {
 
     if (input.status === 'sent' && !input.quoteSentAt) {
       throw new QuoteSentAtRequiredError();
+    }
+
+    if (
+      input.status === 'sent' &&
+      input.quoteSentAt &&
+      input.quoteSentAt.getTime() > Date.now()
+    ) {
+      throw new QuoteSentAtInFutureError();
     }
 
     const updated = await this.opportunityRepository.updateStatus(input);

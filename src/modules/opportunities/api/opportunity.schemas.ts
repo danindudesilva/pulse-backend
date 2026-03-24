@@ -24,6 +24,18 @@ export const createOpportunityBodySchema = z
         message: 'quoteSentAt is required when status is sent'
       });
     }
+
+    if (value.status === 'sent' && value.quoteSentAt) {
+      const quoteSentAt = new Date(value.quoteSentAt);
+
+      if (quoteSentAt.getTime() > Date.now()) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['quoteSentAt'],
+          message: 'quoteSentAt cannot be in the future'
+        });
+      }
+    }
   });
 
 export const listOpportunitiesQuerySchema = z
@@ -52,5 +64,17 @@ export const updateOpportunityStatusBodySchema = z
         path: ['quoteSentAt'],
         message: 'quoteSentAt is required when status is sent'
       });
+    }
+
+    if (value.status === 'sent' && value.quoteSentAt) {
+      const quoteSentAt = new Date(value.quoteSentAt);
+
+      if (quoteSentAt.getTime() > Date.now()) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['quoteSentAt'],
+          message: 'quoteSentAt cannot be in the future'
+        });
+      }
     }
   });

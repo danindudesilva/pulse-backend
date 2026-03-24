@@ -15,6 +15,12 @@ export class QuoteSentAtRequiredError extends ValidationError {
   }
 }
 
+export class QuoteSentAtInFutureError extends ValidationError {
+  constructor() {
+    super('quoteSentAt cannot be in the future');
+  }
+}
+
 export class InvalidOpportunityStatusTransitionError extends ValidationError {
   constructor(from: string, to: string) {
     super(`Cannot transition opportunity status from ${from} to ${to}`);
