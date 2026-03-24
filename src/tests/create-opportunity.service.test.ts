@@ -4,56 +4,52 @@ import {
   InMemoryOpportunityRepository,
   SpyOpportunityRepository
 } from './support/opportunities/test-opportunity-repositories.js';
+import {
+  InvalidInitialOpportunityStatusError,
+  QuoteSentAtInFutureError,
+  QuoteSentAtOnlyAllowedForSentStatusError,
+  QuoteSentAtRequiredError
+} from '../modules/opportunities/domain/opportunity.errors.js';
+import type { CreateOpportunityInput } from '../modules/opportunities/domain/opportunity.types.js';
 
 describe('CreateOpportunityService', () => {
   it('creates a draft opportunity', async () => {
-    const repository = new InMemoryOpportunityRepository();
+    const repository = new SpyOpportunityRepository();
     const service = new CreateOpportunityService(repository);
 
     const result = await service.execute({
       workspaceId: 'ws_1',
       createdByUserId: 'user_1',
-      title: 'Website redesign proposal',
+      title: 'Proposal',
       status: 'draft'
     });
 
-    expect(result.title).toBe('Website redesign proposal');
     expect(result.status).toBe('draft');
-    expect(result.quoteSentAt).toBeNull();
+    expect(repository.createCallCount).toBe(1);
+    expect(repository.lastInput).toMatchObject({
+      workspaceId: 'ws_1',
+      createdByUserId: 'user_1',
+      title: 'Proposal',
+      status: 'draft'
+    });
   });
 
   it('creates a sent opportunity when quoteSentAt is provided', async () => {
-    const repository = new InMemoryOpportunityRepository();
+    const repository = new SpyOpportunityRepository();
     const service = new CreateOpportunityService(repository);
-
-    const quoteSentAt = new Date('2026-03-22T09:00:00.000Z');
+    const quoteSentAt = new Date('2026-03-22T10:00:00.000Z');
 
     const result = await service.execute({
       workspaceId: 'ws_1',
       createdByUserId: 'user_1',
-      title: 'Mobile app proposal',
+      title: 'Proposal',
       status: 'sent',
       quoteSentAt
     });
 
     expect(result.status).toBe('sent');
     expect(result.quoteSentAt).toEqual(quoteSentAt);
-  });
-
-  it('rejects non-createable initial statuses', async () => {
-    const repository = new InMemoryOpportunityRepository();
-    const service = new CreateOpportunityService(repository);
-
-    await expect(
-      service.execute({
-        workspaceId: 'ws_1',
-        createdByUserId: 'user_1',
-        title: 'Invalid status opportunity',
-        status: 'won'
-      })
-    ).rejects.toThrow(
-      'Initial opportunity status must be either draft or sent'
-    );
+    expect(repository.createCallCount).toBe(1);
   });
 
   it('does not call the repository when initial status is not createable', async () => {
@@ -64,12 +60,26 @@ describe('CreateOpportunityService', () => {
       service.execute({
         workspaceId: 'ws_1',
         createdByUserId: 'user_1',
-        title: 'Invalid status opportunity',
+        title: 'Proposal',
         status: 'won'
-      })
-    ).rejects.toThrow(
-      'Initial opportunity status must be either draft or sent'
-    );
+      } as CreateOpportunityInput)
+    ).rejects.toBeInstanceOf(InvalidInitialOpportunityStatusError);
+
+    expect(repository.createCallCount).toBe(0);
+  });
+
+  it('does not call the repository when initial status is not createable', async () => {
+    const repository = new SpyOpportunityRepository();
+    const service = new CreateOpportunityService(repository);
+
+    await expect(
+      service.execute({
+        workspaceId: 'ws_1',
+        createdByUserId: 'user_1',
+        title: 'Proposal',
+        status: 'won'
+      } as CreateOpportunityInput)
+    ).rejects.toBeInstanceOf(InvalidInitialOpportunityStatusError);
 
     expect(repository.createCallCount).toBe(0);
   });
@@ -88,6 +98,23 @@ describe('CreateOpportunityService', () => {
     ).rejects.toThrow('quoteSentAt is required when status is sent');
   });
 
+  it('does not call the repository when quoteSentAt is in the future', async () => {
+    const repository = new SpyOpportunityRepository();
+    const service = new CreateOpportunityService(repository);
+
+    await expect(
+      service.execute({
+        workspaceId: 'ws_1',
+        createdByUserId: 'user_1',
+        title: 'Proposal',
+        status: 'sent',
+        quoteSentAt: new Date(Date.now() + 60_000)
+      })
+    ).rejects.toBeInstanceOf(QuoteSentAtInFutureError);
+
+    expect(repository.createCallCount).toBe(0);
+  });
+
   it('does not call the repository when status is sent without quoteSentAt', async () => {
     const repository = new SpyOpportunityRepository();
     const service = new CreateOpportunityService(repository);
@@ -96,10 +123,27 @@ describe('CreateOpportunityService', () => {
       service.execute({
         workspaceId: 'ws_1',
         createdByUserId: 'user_1',
-        title: 'Sent without timestamp',
+        title: 'Proposal',
         status: 'sent'
       })
-    ).rejects.toThrow('quoteSentAt is required when status is sent');
+    ).rejects.toBeInstanceOf(QuoteSentAtRequiredError);
+
+    expect(repository.createCallCount).toBe(0);
+  });
+
+  it('rejects quoteSentAt when status is not sent', async () => {
+    const repository = new SpyOpportunityRepository();
+    const service = new CreateOpportunityService(repository);
+
+    await expect(
+      service.execute({
+        workspaceId: 'ws_1',
+        createdByUserId: 'user_1',
+        title: 'Proposal',
+        status: 'draft',
+        quoteSentAt: new Date(Date.now() + 60_000)
+      })
+    ).rejects.toBeInstanceOf(QuoteSentAtOnlyAllowedForSentStatusError);
 
     expect(repository.createCallCount).toBe(0);
   });

@@ -85,3 +85,26 @@ export async function seedOpportunity(
     }
   });
 }
+
+export async function seedFollowUp(
+  prisma: PrismaClient,
+  params: {
+    id?: string;
+    opportunityId: string;
+    userId: string;
+    dueAt: Date;
+    sentAt?: Date | null;
+    status?: string;
+  }
+) {
+  return prisma.followUp.create({
+    data: {
+      ...(params.id ? { id: params.id } : {}),
+      opportunityId: params.opportunityId,
+      userId: params.userId,
+      dueAt: params.dueAt,
+      sentAt: params.sentAt ?? null,
+      status: params.status ?? 'pending'
+    }
+  });
+}

@@ -4,22 +4,68 @@ import {
   UnauthorizedError
 } from '../../../lib/errors/app-error.js';
 import { asyncHandler } from '../../../lib/http/async-handler.js';
-import { validateBody } from '../../../lib/validation/validate.js';
+import {
+  validateBody,
+  validateParams,
+  validateQuery
+} from '../../../lib/validation/validate.js';
 import type {
   CreateOpportunityInput,
-  OpportunitySummary
+  GetOpportunityInput,
+  ListOpportunitiesInput,
+  OpportunitySummary,
+  UpdateOpportunityStatusInput
 } from '../domain/opportunity.types.js';
-import { createOpportunityBodySchema } from './opportunity.schemas.js';
+import {
+  createOpportunityBodySchema,
+  listOpportunitiesQuerySchema,
+  opportunityParamsSchema,
+  updateOpportunityStatusBodySchema
+} from './opportunity.schemas.js';
 
 export type CreateOpportunityExecutor = {
   execute(input: CreateOpportunityInput): Promise<OpportunitySummary>;
 };
 
-export function createOpportunityRouter(service: CreateOpportunityExecutor) {
+export type ListOpportunitiesExecutor = {
+  execute(input: ListOpportunitiesInput): Promise<OpportunitySummary[]>;
+};
+
+export type GetOpportunityExecutor = {
+  execute(input: GetOpportunityInput): Promise<OpportunitySummary>;
+};
+
+export type UpdateOpportunityStatusExecutor = {
+  execute(input: UpdateOpportunityStatusInput): Promise<OpportunitySummary>;
+};
+
+export function createOpportunityRouter(deps: {
+  createOpportunityService: CreateOpportunityExecutor;
+  listOpportunitiesService: ListOpportunitiesExecutor;
+  getOpportunityService: GetOpportunityExecutor;
+  updateOpportunityStatusService: UpdateOpportunityStatusExecutor;
+}) {
   const router = Router();
 
   router
     .route('/')
+    .get(
+      asyncHandler(async (req, res) => {
+        if (!req.authContext) {
+          throw new UnauthorizedError('Authentication required');
+        }
+
+        const query = validateQuery(listOpportunitiesQuerySchema, req);
+
+        const result = await deps.listOpportunitiesService.execute({
+          workspaceId: req.authContext.workspaceId,
+          ...(query.view !== undefined ? { view: query.view } : {}),
+          ...(query.status !== undefined ? { status: query.status } : {})
+        });
+
+        res.status(200).json(result);
+      })
+    )
     .post(
       asyncHandler(async (req, res) => {
         if (!req.authContext) {
@@ -54,7 +100,7 @@ export function createOpportunityRouter(service: CreateOpportunityExecutor) {
             : {})
         };
 
-        const result = await service.execute(body);
+        const result = await deps.createOpportunityService.execute(body);
 
         res.status(201).json(result);
       })
@@ -63,6 +109,67 @@ export function createOpportunityRouter(service: CreateOpportunityExecutor) {
       next(
         new MethodNotAllowedError(
           `Method ${req.method} not allowed for ${req.baseUrl || '/api/opportunities'}`
+        )
+      );
+    });
+
+  router
+    .route('/:opportunityId')
+    .get(
+      asyncHandler(async (req, res) => {
+        if (!req.authContext) {
+          throw new UnauthorizedError('Authentication required');
+        }
+
+        const params = validateParams(opportunityParamsSchema, req);
+
+        const result = await deps.getOpportunityService.execute({
+          workspaceId: req.authContext.workspaceId,
+          opportunityId: params.opportunityId
+        });
+
+        res.status(200).json(result);
+      })
+    )
+    .all((req, _res, next) => {
+      next(
+        new MethodNotAllowedError(
+          `Method ${req.method} not allowed for ${
+            req.baseUrl || '/api/opportunities/:opportunityId'
+          }`
+        )
+      );
+    });
+
+  router
+    .route('/:opportunityId/status')
+    .patch(
+      asyncHandler(async (req, res) => {
+        if (!req.authContext) {
+          throw new UnauthorizedError('Authentication required');
+        }
+
+        const params = validateParams(opportunityParamsSchema, req);
+        const body = validateBody(updateOpportunityStatusBodySchema, req);
+
+        const result = await deps.updateOpportunityStatusService.execute({
+          workspaceId: req.authContext.workspaceId,
+          opportunityId: params.opportunityId,
+          status: body.status,
+          ...(body.quoteSentAt !== undefined
+            ? { quoteSentAt: new Date(body.quoteSentAt) }
+            : {})
+        });
+
+        res.status(200).json(result);
+      })
+    )
+    .all((req, _res, next) => {
+      next(
+        new MethodNotAllowedError(
+          `Method ${req.method} not allowed for ${
+            req.baseUrl || '/api/opportunities/:opportunityId/status'
+          }`
         )
       );
     });

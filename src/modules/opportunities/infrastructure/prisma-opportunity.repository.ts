@@ -1,12 +1,49 @@
 import { Prisma } from '../../../generated/prisma/client.js';
-import type { PrismaClient } from '../../../generated/prisma/client.js';
+import type {
+  PrismaClient,
+  Opportunity,
+  FollowUp
+} from '../../../generated/prisma/client.js';
 import { ConflictError } from '../../../lib/errors/app-error.js';
 import { extractForeignKeyConstraintName } from './extract-foreign-key-constraint.js';
 import type {
   CreateOpportunityInput,
-  OpportunitySummary
+  GetOpportunityInput,
+  ListOpportunitiesInput,
+  OpportunitySummary,
+  UpdateOpportunityStatusInput
 } from '../domain/opportunity.types.js';
 import type { OpportunityRepository } from './opportunity.repository.js';
+
+type OpportunityWithPendingFollowUps = Opportunity & {
+  followUps: Pick<FollowUp, 'dueAt'>[];
+};
+
+function toOpportunitySummary(
+  opportunity: OpportunityWithPendingFollowUps
+): OpportunitySummary {
+  const sortedFollowUps = [...opportunity.followUps].sort(
+    (a, b) => a.dueAt.getTime() - b.dueAt.getTime()
+  );
+
+  return {
+    id: opportunity.id,
+    workspaceId: opportunity.workspaceId,
+    createdByUserId: opportunity.createdByUserId,
+    title: opportunity.title,
+    companyName: opportunity.companyName,
+    contactName: opportunity.contactName,
+    contactEmail: opportunity.contactEmail,
+    valueAmount: opportunity.valueAmount?.toString() ?? null,
+    currency: opportunity.currency,
+    notes: opportunity.notes,
+    status: opportunity.status,
+    quoteSentAt: opportunity.quoteSentAt,
+    nextFollowUpAt: sortedFollowUps[0]?.dueAt ?? null,
+    createdAt: opportunity.createdAt,
+    updatedAt: opportunity.updatedAt
+  };
+}
 
 export class PrismaOpportunityRepository implements OpportunityRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -19,12 +56,28 @@ export class PrismaOpportunityRepository implements OpportunityRepository {
     // TODO (post-MVP): Add a raw SQL composite FK for full DB-level enforcement.
     const membership = await this.prisma.workspaceMember.findFirst({
       where: {
-        userId: input.createdByUserId,
-        workspaceId: input.workspaceId
+        workspaceId: input.workspaceId,
+        userId: input.createdByUserId
       }
     });
 
     if (!membership) {
+      const workspaceExists = await this.prisma.workspace.findUnique({
+        where: { id: input.workspaceId }
+      });
+
+      if (!workspaceExists) {
+        throw new ConflictError('Referenced workspace does not exist');
+      }
+
+      const userExists = await this.prisma.user.findUnique({
+        where: { id: input.createdByUserId }
+      });
+
+      if (!userExists) {
+        throw new ConflictError('Referenced user does not exist');
+      }
+
       throw new ConflictError(
         'User is not a member of the specified workspace'
       );
@@ -44,25 +97,16 @@ export class PrismaOpportunityRepository implements OpportunityRepository {
           notes: input.notes ?? null,
           status: input.status,
           quoteSentAt: input.quoteSentAt ?? null
+        },
+        include: {
+          followUps: {
+            where: { status: 'pending' },
+            select: { dueAt: true }
+          }
         }
       });
 
-      return {
-        id: opportunity.id,
-        workspaceId: opportunity.workspaceId,
-        createdByUserId: opportunity.createdByUserId,
-        title: opportunity.title,
-        companyName: opportunity.companyName,
-        contactName: opportunity.contactName,
-        contactEmail: opportunity.contactEmail,
-        valueAmount: opportunity.valueAmount?.toString() ?? null,
-        currency: opportunity.currency,
-        notes: opportunity.notes,
-        status: opportunity.status,
-        quoteSentAt: opportunity.quoteSentAt,
-        createdAt: opportunity.createdAt,
-        updatedAt: opportunity.updatedAt
-      };
+      return toOpportunitySummary(opportunity);
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -83,5 +127,115 @@ export class PrismaOpportunityRepository implements OpportunityRepository {
 
       throw error;
     }
+  }
+
+  async listByWorkspace(
+    input: ListOpportunitiesInput
+  ): Promise<OpportunitySummary[]> {
+    const now = new Date();
+
+    const opportunities = await this.prisma.opportunity.findMany({
+      where: {
+        workspaceId: input.workspaceId,
+        ...(input.status ? { status: input.status } : {}),
+        ...(input.view === 'due'
+          ? {
+              followUps: {
+                some: {
+                  status: 'pending',
+                  dueAt: { lte: now }
+                }
+              }
+            }
+          : {}),
+        ...(input.view === 'upcoming'
+          ? {
+              AND: [
+                {
+                  followUps: {
+                    none: {
+                      status: 'pending',
+                      dueAt: { lte: now }
+                    }
+                  }
+                },
+                {
+                  followUps: {
+                    some: {
+                      status: 'pending',
+                      dueAt: { gt: now }
+                    }
+                  }
+                }
+              ]
+            }
+          : {})
+      },
+      include: {
+        followUps: {
+          where: { status: 'pending' },
+          select: { dueAt: true }
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    return opportunities.map(toOpportunitySummary);
+  }
+
+  async findByIdInWorkspace(
+    input: GetOpportunityInput
+  ): Promise<OpportunitySummary | null> {
+    const opportunity = await this.prisma.opportunity.findFirst({
+      where: {
+        id: input.opportunityId,
+        workspaceId: input.workspaceId
+      },
+      include: {
+        followUps: {
+          where: { status: 'pending' },
+          select: { dueAt: true }
+        }
+      }
+    });
+
+    return opportunity ? toOpportunitySummary(opportunity) : null;
+  }
+
+  async updateStatus(
+    input: UpdateOpportunityStatusInput
+  ): Promise<OpportunitySummary | null> {
+    const existing = await this.prisma.opportunity.findFirst({
+      where: {
+        id: input.opportunityId,
+        workspaceId: input.workspaceId
+      }
+    });
+
+    if (!existing) {
+      return null;
+    }
+
+    const updated = await this.prisma.opportunity.update({
+      where: {
+        id: existing.id
+      },
+      data: {
+        status: input.status,
+        ...(input.status === 'sent'
+          ? { quoteSentAt: input.quoteSentAt ?? null }
+          : {})
+      },
+      include: {
+        followUps: {
+          where: { status: 'pending' },
+          select: { dueAt: true }
+        }
+      }
+    });
+
+    return toOpportunitySummary(updated);
   }
 }

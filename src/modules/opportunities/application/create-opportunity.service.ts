@@ -1,5 +1,7 @@
 import {
   InvalidInitialOpportunityStatusError,
+  QuoteSentAtInFutureError,
+  QuoteSentAtOnlyAllowedForSentStatusError,
   QuoteSentAtRequiredError
 } from '../domain/opportunity.errors.js';
 import type {
@@ -16,8 +18,20 @@ export class CreateOpportunityService {
       throw new InvalidInitialOpportunityStatusError();
     }
 
+    if (input.status !== 'sent' && input.quoteSentAt !== undefined) {
+      throw new QuoteSentAtOnlyAllowedForSentStatusError();
+    }
+
     if (input.status === 'sent' && !input.quoteSentAt) {
       throw new QuoteSentAtRequiredError();
+    }
+
+    if (
+      input.status === 'sent' &&
+      input.quoteSentAt &&
+      input.quoteSentAt.getTime() > Date.now()
+    ) {
+      throw new QuoteSentAtInFutureError();
     }
 
     return this.opportunityRepository.create(input);

@@ -70,7 +70,7 @@ describe('PrismaOpportunityRepository integration', () => {
     } catch (error) {
       expect(error).toBeInstanceOf(ConflictError);
       expect(error).toMatchObject({
-        message: 'User is not a member of the specified workspace'
+        message: 'Referenced workspace does not exist'
       });
     }
   });
@@ -92,7 +92,7 @@ describe('PrismaOpportunityRepository integration', () => {
     } catch (error) {
       expect(error).toBeInstanceOf(ConflictError);
       expect(error).toMatchObject({
-        message: 'User is not a member of the specified workspace'
+        message: 'Referenced user does not exist'
       });
     }
   });

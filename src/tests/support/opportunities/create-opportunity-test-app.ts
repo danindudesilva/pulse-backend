@@ -1,12 +1,25 @@
 import express from 'express';
 import { errorMiddleware } from '../../../lib/http/error-middleware.js';
 import { createOpportunityRouter } from '../../../modules/opportunities/api/opportunity.route.js';
-import type { CreateOpportunityExecutor } from '../../../modules/opportunities/api/opportunity.route.js';
+import type {
+  CreateOpportunityExecutor,
+  GetOpportunityExecutor,
+  ListOpportunitiesExecutor,
+  UpdateOpportunityStatusExecutor
+} from '../../../modules/opportunities/api/opportunity.route.js';
 import type { AuthContext } from '../../../modules/auth/domain/auth-context.types.js';
 import { StubCreateOpportunityService } from './stub-create-opportunity-service.js';
+import { StubListOpportunitiesService } from './stub-list-opportunities.service.js';
+import { StubGetOpportunityService } from './stub-get-opportunity.service.js';
+import { StubUpdateOpportunityStatusService } from './stub-update-opportunity-status.service.js';
 
 export function createOpportunityTestApp(
-  service: CreateOpportunityExecutor = new StubCreateOpportunityService(),
+  services?: {
+    createOpportunityService?: CreateOpportunityExecutor;
+    listOpportunitiesService?: ListOpportunitiesExecutor;
+    getOpportunityService?: GetOpportunityExecutor;
+    updateOpportunityStatusService?: UpdateOpportunityStatusExecutor;
+  },
   authContext?: AuthContext
 ) {
   const app = express();
@@ -20,7 +33,23 @@ export function createOpportunityTestApp(
     });
   }
 
-  app.use('/api/opportunities', createOpportunityRouter(service));
+  app.use(
+    '/api/opportunities',
+    createOpportunityRouter({
+      createOpportunityService:
+        services?.createOpportunityService ??
+        new StubCreateOpportunityService(),
+      listOpportunitiesService:
+        services?.listOpportunitiesService ??
+        new StubListOpportunitiesService(),
+      getOpportunityService:
+        services?.getOpportunityService ?? new StubGetOpportunityService(),
+      updateOpportunityStatusService:
+        services?.updateOpportunityStatusService ??
+        new StubUpdateOpportunityStatusService()
+    })
+  );
+
   app.use(errorMiddleware);
 
   return app;
