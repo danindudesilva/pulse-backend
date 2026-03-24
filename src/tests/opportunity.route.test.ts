@@ -188,6 +188,27 @@ describe('POST /api/opportunities', () => {
     });
   });
 
+  it('returns 400 when quoteSentAt is provided for a non-sent status', async () => {
+    const response = await request(app).post('/api/opportunities').send({
+      title: 'Proposal',
+      status: 'draft',
+      quoteSentAt: '2026-03-22T10:00:00.000Z'
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({
+      error: {
+        code: 'VALIDATION_ERROR',
+        message: 'Request validation failed',
+        details: {
+          fieldErrors: {
+            quoteSentAt: ['quoteSentAt is only allowed when status is sent']
+          }
+        }
+      }
+    });
+  });
+
   it('returns 400 when status is missing', async () => {
     const response = await request(app).post('/api/opportunities').send({
       title: 'Proposal'

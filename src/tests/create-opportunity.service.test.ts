@@ -7,6 +7,7 @@ import {
 import {
   InvalidInitialOpportunityStatusError,
   QuoteSentAtInFutureError,
+  QuoteSentAtOnlyAllowedForSentStatusError,
   QuoteSentAtRequiredError
 } from '../modules/opportunities/domain/opportunity.errors.js';
 import type { CreateOpportunityInput } from '../modules/opportunities/domain/opportunity.types.js';
@@ -126,6 +127,23 @@ describe('CreateOpportunityService', () => {
         status: 'sent'
       })
     ).rejects.toBeInstanceOf(QuoteSentAtRequiredError);
+
+    expect(repository.createCallCount).toBe(0);
+  });
+
+  it('rejects quoteSentAt when status is not sent', async () => {
+    const repository = new SpyOpportunityRepository();
+    const service = new CreateOpportunityService(repository);
+
+    await expect(
+      service.execute({
+        workspaceId: 'ws_1',
+        createdByUserId: 'user_1',
+        title: 'Proposal',
+        status: 'draft',
+        quoteSentAt: new Date(Date.now() + 60_000)
+      })
+    ).rejects.toBeInstanceOf(QuoteSentAtOnlyAllowedForSentStatusError);
 
     expect(repository.createCallCount).toBe(0);
   });
