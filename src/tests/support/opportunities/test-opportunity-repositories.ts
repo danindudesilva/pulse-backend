@@ -1,11 +1,12 @@
+import type { OpportunityRepository } from '../../../modules/opportunities/infrastructure/opportunity.repository.js';
 import type {
   CreateOpportunityInput,
   GetOpportunityInput,
   ListOpportunitiesInput,
   OpportunitySummary,
+  UpdateOpportunityInput,
   UpdateOpportunityStatusInput
 } from '../../../modules/opportunities/domain/opportunity.types.js';
-import type { OpportunityRepository } from '../../../modules/opportunities/infrastructure/opportunity.repository.js';
 
 export class InMemoryOpportunityRepository implements OpportunityRepository {
   public readonly opportunities: OpportunitySummary[] = [];
@@ -98,50 +99,50 @@ export class InMemoryOpportunityRepository implements OpportunityRepository {
 
     return existing;
   }
-}
 
-export class SpyOpportunityRepository implements OpportunityRepository {
-  public createCallCount = 0;
-  public lastInput: CreateOpportunityInput | null = null;
-
-  async create(input: CreateOpportunityInput): Promise<OpportunitySummary> {
-    this.createCallCount += 1;
-    this.lastInput = input;
-
-    return {
-      id: 'opp_1',
-      workspaceId: input.workspaceId,
-      createdByUserId: input.createdByUserId,
-      title: input.title,
-      companyName: input.companyName ?? null,
-      contactName: input.contactName ?? null,
-      contactEmail: input.contactEmail ?? null,
-      valueAmount: input.valueAmount ?? null,
-      currency: input.currency ?? null,
-      notes: input.notes ?? null,
-      status: input.status,
-      quoteSentAt: input.quoteSentAt ?? null,
-      nextFollowUpAt: null,
-      createdAt: new Date('2026-03-22T10:00:00.000Z'),
-      updatedAt: new Date('2026-03-22T10:00:00.000Z')
-    };
-  }
-
-  async listByWorkspace(
-    _input: ListOpportunitiesInput
-  ): Promise<OpportunitySummary[]> {
-    return [];
-  }
-
-  async findByIdInWorkspace(
-    _input: GetOpportunityInput
+  async updateInWorkspace(
+    input: UpdateOpportunityInput
   ): Promise<OpportunitySummary | null> {
-    return null;
-  }
+    const existing = this.opportunities.find(
+      (item) =>
+        item.id === input.opportunityId &&
+        item.workspaceId === input.workspaceId
+    );
 
-  async updateStatus(
-    _input: UpdateOpportunityStatusInput
-  ): Promise<OpportunitySummary | null> {
-    return null;
+    if (!existing) {
+      return null;
+    }
+
+    if (input.title !== undefined) {
+      existing.title = input.title;
+    }
+
+    if (input.companyName !== undefined) {
+      existing.companyName = input.companyName;
+    }
+
+    if (input.contactName !== undefined) {
+      existing.contactName = input.contactName;
+    }
+
+    if (input.contactEmail !== undefined) {
+      existing.contactEmail = input.contactEmail;
+    }
+
+    if (input.valueAmount !== undefined) {
+      existing.valueAmount = input.valueAmount;
+    }
+
+    if (input.currency !== undefined) {
+      existing.currency = input.currency;
+    }
+
+    if (input.notes !== undefined) {
+      existing.notes = input.notes;
+    }
+
+    existing.updatedAt = new Date('2026-03-24T11:00:00.000Z');
+
+    return existing;
   }
 }
