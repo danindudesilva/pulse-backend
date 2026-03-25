@@ -106,7 +106,7 @@ Integration tests run against a dedicated PostgreSQL test database.
 2. Start the test database
 
 ```bash
-   npm run db:test:up
+   npm run db:test:up:ci
 ```
 
 This starts a PostgreSQL container on port 5433.
@@ -128,19 +128,7 @@ This starts a PostgreSQL container on port 5433.
 Start the test database:
 
 ```bash
-npm run db:test:up
-```
-
-Stop and remove the test database volume:
-
-```bash
-npm run db:test:down
-```
-
-Reset the test database container completely:
-
-```bash
-npm run db:test:reset
+npm run db:test:up:ci
 ```
 
 ## Opportunity list and status APIs
@@ -190,6 +178,8 @@ If setting status to sent, quoteSentAt is required:
   "quoteSentAt": "2026-03-24T10:00:00.000Z"
 }
 ```
+
+Creating an opportunity also generates the default follow-up schedule atomically. If follow-up generation fails, the opportunity creation is rolled back and no partial data is persisted.
 
 ## Known Limitations & Future Improvements
 
