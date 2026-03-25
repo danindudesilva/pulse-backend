@@ -15,6 +15,8 @@ import { StubUpdateOpportunityService } from '../opportunities/stub-update-oppor
 import { StubUpdateOpportunityStatusService } from '../opportunities/stub-update-opportunity-status.service.js';
 import { StubResolveAuthContextService } from '../auth/stub-resolve-auth-context.service.js';
 import { StubBootstrapUserService } from '../identity.ts/stub-bootstrap-user-service.js';
+import type { GetDashboardSummaryExecutor } from '../../../modules/dashboard/api/dashboard.route.js';
+import { StubGetDashboardSummaryService } from '../dashboard/stub-get-dashboard-summary.service.js';
 
 type TestAppDependencyOverrides = {
   bootstrapUserService?: BootstrapUserExecutor;
@@ -23,6 +25,7 @@ type TestAppDependencyOverrides = {
   getOpportunityService?: GetOpportunityExecutor;
   updateOpportunityService?: UpdateOpportunityExecutor;
   updateOpportunityStatusService?: UpdateOpportunityStatusExecutor;
+  getDashboardSummaryService?: GetDashboardSummaryExecutor;
   resolveAuthContextService?: {
     execute(input: { clerkUserId: string }): Promise<AuthContext>;
   };
@@ -45,6 +48,9 @@ export function createTestAppDependencies(
     updateOpportunityStatusService:
       overrides.updateOpportunityStatusService ??
       new StubUpdateOpportunityStatusService(),
+    getDashboardSummaryService:
+      overrides.getDashboardSummaryService ??
+      new StubGetDashboardSummaryService(),
     resolveAuthContextService:
       overrides.resolveAuthContextService ??
       new StubResolveAuthContextService({
