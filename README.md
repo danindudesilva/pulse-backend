@@ -245,7 +245,3 @@ Creating an opportunity also generates the default follow-up schedule atomically
   - This will guarantee integrity even if someone bypasses the application layer or runs raw SQL queries.
 
 This ensures the backend is robust and maintains data integrity even beyond MVP usage.
-
-```
-
-```
