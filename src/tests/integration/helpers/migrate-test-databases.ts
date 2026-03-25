@@ -2,7 +2,12 @@ import 'dotenv/config';
 import { execa } from 'execa';
 import { getIntegrationDatabaseUrl } from './test-database-url.js';
 
-const SUFFIXES = ['identity', 'opportunities', 'followups'] as const;
+const SUFFIXES = [
+  'identity',
+  'opportunities',
+  'followups',
+  'dashboard'
+] as const;
 
 async function main() {
   for (const suffix of SUFFIXES) {
