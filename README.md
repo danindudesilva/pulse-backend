@@ -179,6 +179,56 @@ If setting status to sent, quoteSentAt is required:
 }
 ```
 
+## Edit opportunity
+
+Protected opportunity updates are scoped to the authenticated workspace.
+
+### Endpoint
+
+```http
+PATCH /api/opportunities/:opportunityId
+```
+
+#### Editable fields
+
+- title
+- companyName
+- contactName
+- contactEmail
+- valueAmount
+- currency
+- notes
+
+#### Not editable through this endpoint
+
+- workspaceId
+- createdByUserId
+- status
+- quoteSentAt
+
+Status changes must use:
+
+```http
+PATCH /api/opportunities/:opportunityId/status
+```
+
+#### Clearing optional fields
+
+To clear optional fields, send null.
+
+Example:
+
+```json
+{
+  "companyName": null,
+  "contactName": null,
+  "contactEmail": null,
+  "valueAmount": null,
+  "currency": null,
+  "notes": null
+}
+```
+
 Creating an opportunity also generates the default follow-up schedule atomically. If follow-up generation fails, the opportunity creation is rolled back and no partial data is persisted.
 
 ## Known Limitations & Future Improvements
@@ -195,3 +245,7 @@ Creating an opportunity also generates the default follow-up schedule atomically
   - This will guarantee integrity even if someone bypasses the application layer or runs raw SQL queries.
 
 This ensures the backend is robust and maintains data integrity even beyond MVP usage.
+
+```
+
+```
