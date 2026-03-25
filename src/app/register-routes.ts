@@ -13,6 +13,10 @@ import {
 import { createRequireAuthContextMiddleware } from '../modules/auth/api/require-auth-context.middleware.js';
 import { requireClerkAuth } from '../modules/auth/api/require-clerk-auth.middleware.js';
 import type { AuthContext } from '../modules/auth/domain/auth-context.types.js';
+import {
+  createDashboardRouter,
+  type GetDashboardSummaryExecutor
+} from '../modules/dashboard/api/dashboard.route.js';
 
 type ResolveAuthContextExecutor = {
   execute(input: { clerkUserId: string }): Promise<AuthContext>;
@@ -25,6 +29,7 @@ export type AppDependencies = {
   getOpportunityService: GetOpportunityExecutor;
   updateOpportunityService: UpdateOpportunityExecutor;
   updateOpportunityStatusService: UpdateOpportunityStatusExecutor;
+  getDashboardSummaryService: GetDashboardSummaryExecutor;
   resolveAuthContextService: ResolveAuthContextExecutor;
 };
 
@@ -39,6 +44,12 @@ export function registerRoutes(app: Express, deps: AppDependencies) {
     '/api/auth/bootstrap',
     requireClerkAuth,
     createBootstrapRouter(deps.bootstrapUserService)
+  );
+
+  app.use(
+    '/api/dashboard',
+    requireAuthContext,
+    createDashboardRouter(deps.getDashboardSummaryService)
   );
 
   app.use(
