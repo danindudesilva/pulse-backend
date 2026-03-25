@@ -11,6 +11,7 @@ import type {
   GetOpportunityInput,
   ListOpportunitiesInput,
   OpportunitySummary,
+  UpdateOpportunityInput,
   UpdateOpportunityStatusInput
 } from '../domain/opportunity.types.js';
 import type { OpportunityRepository } from './opportunity.repository.js';
@@ -232,6 +233,52 @@ export class PrismaOpportunityRepository implements OpportunityRepository {
         ...(input.status === 'sent'
           ? { quoteSentAt: input.quoteSentAt ?? null }
           : {})
+      },
+      include: {
+        followUps: {
+          where: { status: 'pending' },
+          select: { dueAt: true }
+        }
+      }
+    });
+
+    return toOpportunitySummary(updated);
+  }
+
+  async updateInWorkspace(
+    input: UpdateOpportunityInput
+  ): Promise<OpportunitySummary | null> {
+    const existing = await this.prisma.opportunity.findFirst({
+      where: {
+        id: input.opportunityId,
+        workspaceId: input.workspaceId
+      }
+    });
+
+    if (!existing) {
+      return null;
+    }
+
+    const updated = await this.prisma.opportunity.update({
+      where: {
+        id: existing.id
+      },
+      data: {
+        ...(input.title !== undefined ? { title: input.title } : {}),
+        ...(input.companyName !== undefined
+          ? { companyName: input.companyName }
+          : {}),
+        ...(input.contactName !== undefined
+          ? { contactName: input.contactName }
+          : {}),
+        ...(input.contactEmail !== undefined
+          ? { contactEmail: input.contactEmail }
+          : {}),
+        ...(input.valueAmount !== undefined
+          ? { valueAmount: input.valueAmount }
+          : {}),
+        ...(input.currency !== undefined ? { currency: input.currency } : {}),
+        ...(input.notes !== undefined ? { notes: input.notes } : {})
       },
       include: {
         followUps: {
