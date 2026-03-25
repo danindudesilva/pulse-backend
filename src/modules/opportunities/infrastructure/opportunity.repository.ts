@@ -3,6 +3,7 @@ import type {
   GetOpportunityInput,
   ListOpportunitiesInput,
   OpportunitySummary,
+  UpdateOpportunityInput,
   UpdateOpportunityStatusInput
 } from '../domain/opportunity.types.js';
 
@@ -14,5 +15,8 @@ export interface OpportunityRepository {
   ): Promise<OpportunitySummary | null>;
   updateStatus(
     input: UpdateOpportunityStatusInput
+  ): Promise<OpportunitySummary | null>;
+  updateInWorkspace(
+    input: UpdateOpportunityInput
   ): Promise<OpportunitySummary | null>;
 }
