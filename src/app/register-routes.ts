@@ -7,6 +7,7 @@ import {
   type CreateOpportunityExecutor,
   type GetOpportunityExecutor,
   type ListOpportunitiesExecutor,
+  type UpdateOpportunityExecutor,
   type UpdateOpportunityStatusExecutor
 } from '../modules/opportunities/api/opportunity.route.js';
 import { createRequireAuthContextMiddleware } from '../modules/auth/api/require-auth-context.middleware.js';
@@ -22,6 +23,7 @@ export type AppDependencies = {
   createOpportunityService: CreateOpportunityExecutor;
   listOpportunitiesService: ListOpportunitiesExecutor;
   getOpportunityService: GetOpportunityExecutor;
+  updateOpportunityService: UpdateOpportunityExecutor;
   updateOpportunityStatusService: UpdateOpportunityStatusExecutor;
   resolveAuthContextService: ResolveAuthContextExecutor;
 };
@@ -46,6 +48,7 @@ export function registerRoutes(app: Express, deps: AppDependencies) {
       createOpportunityService: deps.createOpportunityService,
       listOpportunitiesService: deps.listOpportunitiesService,
       getOpportunityService: deps.getOpportunityService,
+      updateOpportunityService: deps.updateOpportunityService,
       updateOpportunityStatusService: deps.updateOpportunityStatusService
     })
   );
