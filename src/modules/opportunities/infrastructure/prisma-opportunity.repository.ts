@@ -40,7 +40,7 @@ function toOpportunitySummary(
     companyName: opportunity.companyName,
     contactName: opportunity.contactName,
     contactEmail: opportunity.contactEmail,
-    valueAmount: opportunity.valueAmount?.toString() ?? null,
+    valueAmount: opportunity.valueAmount?.toFixed(2) ?? null,
     currency: opportunity.currency,
     notes: opportunity.notes,
     status: opportunity.status,
