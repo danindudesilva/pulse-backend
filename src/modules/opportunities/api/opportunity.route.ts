@@ -14,12 +14,14 @@ import type {
   GetOpportunityInput,
   ListOpportunitiesInput,
   OpportunitySummary,
+  UpdateOpportunityInput,
   UpdateOpportunityStatusInput
 } from '../domain/opportunity.types.js';
 import {
   createOpportunityBodySchema,
   listOpportunitiesQuerySchema,
   opportunityParamsSchema,
+  updateOpportunityBodySchema,
   updateOpportunityStatusBodySchema
 } from './opportunity.schemas.js';
 
@@ -39,10 +41,15 @@ export type UpdateOpportunityStatusExecutor = {
   execute(input: UpdateOpportunityStatusInput): Promise<OpportunitySummary>;
 };
 
+export type UpdateOpportunityExecutor = {
+  execute(input: UpdateOpportunityInput): Promise<OpportunitySummary>;
+};
+
 export function createOpportunityRouter(deps: {
   createOpportunityService: CreateOpportunityExecutor;
   listOpportunitiesService: ListOpportunitiesExecutor;
   getOpportunityService: GetOpportunityExecutor;
+  updateOpportunityService: UpdateOpportunityExecutor;
   updateOpportunityStatusService: UpdateOpportunityStatusExecutor;
 }) {
   const router = Router();
@@ -126,6 +133,43 @@ export function createOpportunityRouter(deps: {
         const result = await deps.getOpportunityService.execute({
           workspaceId: req.authContext.workspaceId,
           opportunityId: params.opportunityId
+        });
+
+        res.status(200).json(result);
+      })
+    )
+    .patch(
+      asyncHandler(async (req, res) => {
+        if (!req.authContext) {
+          throw new UnauthorizedError('Authentication required');
+        }
+
+        const params = validateParams(opportunityParamsSchema, req);
+        const body = validateBody(updateOpportunityBodySchema, req);
+
+        const result = await deps.updateOpportunityService.execute({
+          workspaceId: req.authContext.workspaceId,
+          opportunityId: params.opportunityId,
+          ...(body.title !== undefined ? { title: body.title } : {}),
+          ...(body.companyName !== undefined
+            ? { companyName: body.companyName }
+            : {}),
+          ...(body.contactName !== undefined
+            ? { contactName: body.contactName }
+            : {}),
+          ...(body.contactEmail !== undefined
+            ? { contactEmail: body.contactEmail }
+            : {}),
+          ...(body.valueAmount !== undefined
+            ? { valueAmount: body.valueAmount }
+            : {}),
+          ...(body.currency !== undefined
+            ? {
+                currency:
+                  body.currency === null ? null : body.currency.toUpperCase()
+              }
+            : {}),
+          ...(body.notes !== undefined ? { notes: body.notes } : {})
         });
 
         res.status(200).json(result);

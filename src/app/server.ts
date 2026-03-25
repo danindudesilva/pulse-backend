@@ -10,6 +10,7 @@ import { PrismaOpportunityRepository } from '../modules/opportunities/infrastruc
 import { ResolveAuthContextService } from '../modules/auth/application/resolve-auth-context.service.js';
 import { PrismaLocalAuthRepository } from '../modules/auth/infrastructure/prisma-local-auth.repository.js';
 import { CreateOpportunityWithFollowUpsService } from '../modules/opportunities/application/create-opportunity-with-followups.service.js';
+import { UpdateOpportunityService } from '../modules/opportunities/application/update-opportunity.service.js';
 
 const identityRepository = new PrismaIdentityRepository(prisma);
 const bootstrapUserService = new BootstrapUserService(identityRepository);
@@ -27,6 +28,10 @@ const updateOpportunityStatusService = new UpdateOpportunityStatusService(
   opportunityRepository
 );
 
+const updateOpportunityService = new UpdateOpportunityService(
+  opportunityRepository
+);
+
 const localAuthRepository = new PrismaLocalAuthRepository(prisma);
 const resolveAuthContextService = new ResolveAuthContextService(
   localAuthRepository
@@ -37,6 +42,7 @@ const app = createApp({
   createOpportunityService,
   listOpportunitiesService,
   getOpportunityService,
+  updateOpportunityService,
   updateOpportunityStatusService,
   resolveAuthContextService
 });

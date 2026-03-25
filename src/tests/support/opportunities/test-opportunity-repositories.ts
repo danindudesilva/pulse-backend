@@ -1,11 +1,12 @@
+import type { OpportunityRepository } from '../../../modules/opportunities/infrastructure/opportunity.repository.js';
 import type {
   CreateOpportunityInput,
   GetOpportunityInput,
   ListOpportunitiesInput,
   OpportunitySummary,
+  UpdateOpportunityInput,
   UpdateOpportunityStatusInput
 } from '../../../modules/opportunities/domain/opportunity.types.js';
-import type { OpportunityRepository } from '../../../modules/opportunities/infrastructure/opportunity.repository.js';
 
 export class InMemoryOpportunityRepository implements OpportunityRepository {
   public readonly opportunities: OpportunitySummary[] = [];
@@ -19,7 +20,10 @@ export class InMemoryOpportunityRepository implements OpportunityRepository {
       companyName: input.companyName ?? null,
       contactName: input.contactName ?? null,
       contactEmail: input.contactEmail ?? null,
-      valueAmount: input.valueAmount ?? null,
+      valueAmount:
+        input.valueAmount !== undefined && input.valueAmount !== null
+          ? Number(input.valueAmount).toFixed(2)
+          : null,
       currency: input.currency ?? null,
       notes: input.notes ?? null,
       status: input.status,
@@ -98,6 +102,52 @@ export class InMemoryOpportunityRepository implements OpportunityRepository {
 
     return existing;
   }
+
+  async updateInWorkspace(
+    input: UpdateOpportunityInput
+  ): Promise<OpportunitySummary | null> {
+    const existing = this.opportunities.find(
+      (item) =>
+        item.id === input.opportunityId &&
+        item.workspaceId === input.workspaceId
+    );
+
+    if (!existing) {
+      return null;
+    }
+
+    if (input.title !== undefined) {
+      existing.title = input.title;
+    }
+
+    if (input.companyName !== undefined) {
+      existing.companyName = input.companyName;
+    }
+
+    if (input.contactName !== undefined) {
+      existing.contactName = input.contactName;
+    }
+
+    if (input.contactEmail !== undefined) {
+      existing.contactEmail = input.contactEmail;
+    }
+
+    if (input.valueAmount !== undefined) {
+      existing.valueAmount = input.valueAmount;
+    }
+
+    if (input.currency !== undefined) {
+      existing.currency = input.currency;
+    }
+
+    if (input.notes !== undefined) {
+      existing.notes = input.notes;
+    }
+
+    existing.updatedAt = new Date('2026-03-24T11:00:00.000Z');
+
+    return existing;
+  }
 }
 
 export class SpyOpportunityRepository implements OpportunityRepository {
@@ -116,7 +166,10 @@ export class SpyOpportunityRepository implements OpportunityRepository {
       companyName: input.companyName ?? null,
       contactName: input.contactName ?? null,
       contactEmail: input.contactEmail ?? null,
-      valueAmount: input.valueAmount ?? null,
+      valueAmount:
+        input.valueAmount !== undefined && input.valueAmount !== null
+          ? Number(input.valueAmount).toFixed(2)
+          : null,
       currency: input.currency ?? null,
       notes: input.notes ?? null,
       status: input.status,
@@ -141,6 +194,11 @@ export class SpyOpportunityRepository implements OpportunityRepository {
 
   async updateStatus(
     _input: UpdateOpportunityStatusInput
+  ): Promise<OpportunitySummary | null> {
+    return null;
+  }
+  async updateInWorkspace(
+    _input: UpdateOpportunityInput
   ): Promise<OpportunitySummary | null> {
     return null;
   }

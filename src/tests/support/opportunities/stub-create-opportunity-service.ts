@@ -14,7 +14,10 @@ export class StubCreateOpportunityService implements CreateOpportunityExecutor {
       companyName: input.companyName ?? null,
       contactName: input.contactName ?? null,
       contactEmail: input.contactEmail ?? null,
-      valueAmount: input.valueAmount ?? null,
+      valueAmount:
+        input.valueAmount !== undefined && input.valueAmount !== null
+          ? Number(input.valueAmount).toFixed(2)
+          : null,
       currency: input.currency ?? null,
       notes: input.notes ?? null,
       status: input.status,

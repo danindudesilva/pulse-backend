@@ -5,6 +5,7 @@ import type {
   CreateOpportunityExecutor,
   GetOpportunityExecutor,
   ListOpportunitiesExecutor,
+  UpdateOpportunityExecutor,
   UpdateOpportunityStatusExecutor
 } from '../../../modules/opportunities/api/opportunity.route.js';
 import type { AuthContext } from '../../../modules/auth/domain/auth-context.types.js';
@@ -12,12 +13,14 @@ import { StubCreateOpportunityService } from './stub-create-opportunity-service.
 import { StubListOpportunitiesService } from './stub-list-opportunities.service.js';
 import { StubGetOpportunityService } from './stub-get-opportunity.service.js';
 import { StubUpdateOpportunityStatusService } from './stub-update-opportunity-status.service.js';
+import { StubUpdateOpportunityService } from './stub-update-opportunity.service.js';
 
 export function createOpportunityTestApp(
   services?: {
     createOpportunityService?: CreateOpportunityExecutor;
     listOpportunitiesService?: ListOpportunitiesExecutor;
     getOpportunityService?: GetOpportunityExecutor;
+    updateOpportunityService?: UpdateOpportunityExecutor;
     updateOpportunityStatusService?: UpdateOpportunityStatusExecutor;
   },
   authContext?: AuthContext
@@ -44,6 +47,9 @@ export function createOpportunityTestApp(
         new StubListOpportunitiesService(),
       getOpportunityService:
         services?.getOpportunityService ?? new StubGetOpportunityService(),
+      updateOpportunityService:
+        services?.updateOpportunityService ??
+        new StubUpdateOpportunityService(),
       updateOpportunityStatusService:
         services?.updateOpportunityStatusService ??
         new StubUpdateOpportunityStatusService()

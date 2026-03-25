@@ -45,6 +45,18 @@ export type GetOpportunityInput = {
   opportunityId: string;
 };
 
+export type UpdateOpportunityInput = {
+  workspaceId: string;
+  opportunityId: string;
+  title?: string;
+  companyName?: string | null;
+  contactName?: string | null;
+  contactEmail?: string | null;
+  valueAmount?: string | null;
+  currency?: string | null;
+  notes?: string | null;
+};
+
 export type UpdateOpportunityStatusInput = {
   workspaceId: string;
   opportunityId: string;

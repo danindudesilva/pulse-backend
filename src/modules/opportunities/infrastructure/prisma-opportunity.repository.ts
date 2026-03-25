@@ -11,6 +11,7 @@ import type {
   GetOpportunityInput,
   ListOpportunitiesInput,
   OpportunitySummary,
+  UpdateOpportunityInput,
   UpdateOpportunityStatusInput
 } from '../domain/opportunity.types.js';
 import type { OpportunityRepository } from './opportunity.repository.js';
@@ -39,7 +40,7 @@ function toOpportunitySummary(
     companyName: opportunity.companyName,
     contactName: opportunity.contactName,
     contactEmail: opportunity.contactEmail,
-    valueAmount: opportunity.valueAmount?.toString() ?? null,
+    valueAmount: opportunity.valueAmount?.toFixed(2) ?? null,
     currency: opportunity.currency,
     notes: opportunity.notes,
     status: opportunity.status,
@@ -97,7 +98,10 @@ export class PrismaOpportunityRepository implements OpportunityRepository {
           companyName: input.companyName ?? null,
           contactName: input.contactName ?? null,
           contactEmail: input.contactEmail ?? null,
-          valueAmount: input.valueAmount ?? null,
+          valueAmount:
+            input.valueAmount !== undefined && input.valueAmount !== null
+              ? Number(input.valueAmount).toFixed(2)
+              : null,
           currency: input.currency ?? null,
           notes: input.notes ?? null,
           status: input.status,
@@ -232,6 +236,52 @@ export class PrismaOpportunityRepository implements OpportunityRepository {
         ...(input.status === 'sent'
           ? { quoteSentAt: input.quoteSentAt ?? null }
           : {})
+      },
+      include: {
+        followUps: {
+          where: { status: 'pending' },
+          select: { dueAt: true }
+        }
+      }
+    });
+
+    return toOpportunitySummary(updated);
+  }
+
+  async updateInWorkspace(
+    input: UpdateOpportunityInput
+  ): Promise<OpportunitySummary | null> {
+    const existing = await this.prisma.opportunity.findFirst({
+      where: {
+        id: input.opportunityId,
+        workspaceId: input.workspaceId
+      }
+    });
+
+    if (!existing) {
+      return null;
+    }
+
+    const updated = await this.prisma.opportunity.update({
+      where: {
+        id: existing.id
+      },
+      data: {
+        ...(input.title !== undefined ? { title: input.title } : {}),
+        ...(input.companyName !== undefined
+          ? { companyName: input.companyName }
+          : {}),
+        ...(input.contactName !== undefined
+          ? { contactName: input.contactName }
+          : {}),
+        ...(input.contactEmail !== undefined
+          ? { contactEmail: input.contactEmail }
+          : {}),
+        ...(input.valueAmount !== undefined
+          ? { valueAmount: input.valueAmount }
+          : {}),
+        ...(input.currency !== undefined ? { currency: input.currency } : {}),
+        ...(input.notes !== undefined ? { notes: input.notes } : {})
       },
       include: {
         followUps: {
