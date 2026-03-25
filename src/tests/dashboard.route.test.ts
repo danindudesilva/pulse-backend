@@ -1,20 +1,32 @@
 import request from 'supertest';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createApp } from '../app/app.js';
 import { createTestAppDependencies } from './support/app/test-app-deps.js';
 import { CapturingStubGetDashboardSummaryService } from './support/dashboard/capturing-stub-get-dashboard-summary.service.js';
 
+vi.mock('@clerk/express', () => ({
+  getAuth: vi.fn(),
+  clerkMiddleware: () => (_req: unknown, _res: unknown, next: () => void) =>
+    next()
+}));
+
+import { getAuth } from '@clerk/express';
+
 describe('GET /api/dashboard/summary', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    vi.mocked(getAuth).mockReturnValue({
+      userId: 'clerk_123'
+    } as never);
+  });
+
   it('returns 401 when auth context is missing', async () => {
-    const app = createApp(
-      createTestAppDependencies({
-        resolveAuthContextService: {
-          async execute() {
-            throw new Error('should not be called');
-          }
-        }
-      })
-    );
+    vi.mocked(getAuth).mockReturnValue({
+      userId: null
+    } as never);
+
+    const app = createApp(createTestAppDependencies());
 
     const response = await request(app).get('/api/dashboard/summary');
 
