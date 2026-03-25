@@ -1,32 +1,17 @@
 import request from 'supertest';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createApp } from '../app/app.js';
-import { createTestAppDependencies } from './support/app/test-app-deps.js';
+import { describe, expect, it } from 'vitest';
+import { createDashboardTestApp } from './support/dashboard/create-dashboard-test-app.js';
 import { CapturingStubGetDashboardSummaryService } from './support/dashboard/capturing-stub-get-dashboard-summary.service.js';
 
-vi.mock('@clerk/express', () => ({
-  getAuth: vi.fn(),
-  clerkMiddleware: () => (_req: unknown, _res: unknown, next: () => void) =>
-    next()
-}));
-
-import { getAuth } from '@clerk/express';
-
 describe('GET /api/dashboard/summary', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-
-    vi.mocked(getAuth).mockReturnValue({
-      userId: 'clerk_123'
-    } as never);
-  });
+  const defaultAuthContext = {
+    clerkUserId: 'clerk_123',
+    userId: 'user_1',
+    workspaceId: 'ws_1'
+  };
 
   it('returns 401 when auth context is missing', async () => {
-    vi.mocked(getAuth).mockReturnValue({
-      userId: null
-    } as never);
-
-    const app = createApp(createTestAppDependencies());
+    const app = createDashboardTestApp();
 
     const response = await request(app).get('/api/dashboard/summary');
 
@@ -35,21 +20,16 @@ describe('GET /api/dashboard/summary', () => {
 
   it('uses workspaceId from auth context', async () => {
     const service = new CapturingStubGetDashboardSummaryService();
-
-    const app = createApp(
-      createTestAppDependencies({
-        getDashboardSummaryService: service
-      })
-    );
+    const app = createDashboardTestApp(service, defaultAuthContext);
 
     const response = await request(app).get('/api/dashboard/summary');
 
     expect(response.status).toBe(200);
-    expect(service.lastWorkspaceId).toBe('workspace_1');
+    expect(service.lastWorkspaceId).toBe('ws_1');
   });
 
   it('returns the summary payload', async () => {
-    const app = createApp(createTestAppDependencies());
+    const app = createDashboardTestApp(undefined, defaultAuthContext);
 
     const response = await request(app).get('/api/dashboard/summary');
 
@@ -72,7 +52,7 @@ describe('GET /api/dashboard/summary', () => {
   });
 
   it('returns 405 for unsupported methods', async () => {
-    const app = createApp(createTestAppDependencies());
+    const app = createDashboardTestApp(undefined, defaultAuthContext);
 
     const response = await request(app).post('/api/dashboard/summary');
 
