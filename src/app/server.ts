@@ -11,9 +11,16 @@ import { ResolveAuthContextService } from '../modules/auth/application/resolve-a
 import { PrismaLocalAuthRepository } from '../modules/auth/infrastructure/prisma-local-auth.repository.js';
 import { CreateOpportunityWithFollowUpsService } from '../modules/opportunities/application/create-opportunity-with-followups.service.js';
 import { UpdateOpportunityService } from '../modules/opportunities/application/update-opportunity.service.js';
+import { PrismaDashboardRepository } from '../modules/dashboard/infrastructure/prisma-dashboard.repository.js';
+import { GetDashboardSummaryService } from '../modules/dashboard/application/get-dashboard-summary.service.js';
 
 const identityRepository = new PrismaIdentityRepository(prisma);
 const bootstrapUserService = new BootstrapUserService(identityRepository);
+
+const dashboardRepository = new PrismaDashboardRepository(prisma);
+const getDashboardSummaryService = new GetDashboardSummaryService(
+  dashboardRepository
+);
 
 const createOpportunityService = new CreateOpportunityWithFollowUpsService(
   prisma
@@ -44,6 +51,7 @@ const app = createApp({
   getOpportunityService,
   updateOpportunityService,
   updateOpportunityStatusService,
+  getDashboardSummaryService,
   resolveAuthContextService
 });
 

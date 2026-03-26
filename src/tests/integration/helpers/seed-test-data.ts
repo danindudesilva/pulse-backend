@@ -58,7 +58,7 @@ export async function seedOpportunity(
     workspaceId: string;
     createdByUserId: string;
     title: string;
-    status: 'draft' | 'sent';
+    status: 'draft' | 'paused' | 'sent' | 'replied' | 'won' | 'lost';
     companyName?: string | null;
     contactName?: string | null;
     contactEmail?: string | null;

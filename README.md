@@ -123,14 +123,6 @@ This starts a PostgreSQL container on port 5433.
    npm run test:integration
 ```
 
-### Common test database commands
-
-Start the test database:
-
-```bash
-npm run db:test:up:ci
-```
-
 ## Opportunity list and status APIs
 
 Protected opportunity APIs derive workspace and actor context server-side from authenticated request context.
@@ -231,6 +223,42 @@ Example:
 
 Creating an opportunity also generates the default follow-up schedule atomically. If follow-up generation fails, the opportunity creation is rolled back and no partial data is persisted.
 
+## Dashboard summary API
+
+Protected dashboard summaries are scoped to the authenticated workspace.
+
+### Endpoint
+
+```http
+GET /api/dashboard/summary
+```
+
+### Response
+
+```json
+{
+  "opportunities": {
+    "all": 24,
+    "draft": 5,
+    "sent": 8,
+    "replied": 3,
+    "won": 4,
+    "lost": 2,
+    "paused": 2
+  },
+  "followUps": {
+    "due": 6,
+    "upcoming": 10
+  }
+}
+```
+
+### Notes
+
+- all opportunity status buckets are always returned, even when zero
+- due means pending follow-ups with dueAt <= now
+- upcoming means pending follow-ups with dueAt > now
+
 ## Known Limitations & Future Improvements
 
 ### Membership Integrity
@@ -245,3 +273,7 @@ Creating an opportunity also generates the default follow-up schedule atomically
   - This will guarantee integrity even if someone bypasses the application layer or runs raw SQL queries.
 
 This ensures the backend is robust and maintains data integrity even beyond MVP usage.
+
+```
+
+```
