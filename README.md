@@ -127,20 +127,40 @@ This starts a PostgreSQL container on port 5433.
 
 Protected opportunity APIs derive workspace and actor context server-side from authenticated request context.
 
-### List opportunities
+### Paginated opportunity listing
 
 ```http
-GET /api/opportunities
-GET /api/opportunities?view=due
-GET /api/opportunities?view=upcoming
-GET /api/opportunities?status=sent
+GET /api/opportunities?page=1&pageSize=10
+GET /api/opportunities?page=1&pageSize=10&view=due
+GET /api/opportunities?page=1&pageSize=10&view=upcoming
+GET /api/opportunities?page=1&pageSize=10&status=sent
+GET /api/opportunities?page=1&pageSize=10&view=due&status=sent
 ```
 
-Supported view values:
+### Query parameters
 
-- all
-- due
-- upcoming
+- page — default 1
+- pageSize — default 10, maximum 50
+- view — optional: all, due, upcoming
+- status — optional: draft, sent, replied, won, lost, paused
+
+### Response
+
+```json
+{
+  "items": [
+    {
+      "id": "opp_1"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "pageSize": 10,
+    "totalItems": 87,
+    "totalPages": 9
+  }
+}
+```
 
 Get one opportunity
 
