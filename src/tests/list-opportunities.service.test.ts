@@ -23,11 +23,13 @@ describe('ListOpportunitiesService', () => {
 
     const result = await service.execute({
       workspaceId: 'ws_1',
-      view: 'all'
+      view: 'all',
+      page: 1,
+      pageSize: 10
     });
 
-    expect(result).toHaveLength(1);
-    expect(result[0]?.title).toBe('Proposal 1');
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0]?.title).toBe('Proposal 1');
   });
 
   it('filters by status', async () => {
@@ -51,11 +53,13 @@ describe('ListOpportunitiesService', () => {
 
     const result = await service.execute({
       workspaceId: 'ws_1',
-      status: 'sent'
+      status: 'sent',
+      page: 1,
+      pageSize: 10
     });
 
-    expect(result).toHaveLength(1);
-    expect(result[0]?.title).toBe('Sent Proposal');
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0]?.title).toBe('Sent Proposal');
   });
 
   it('returns only due opportunities when view is due', async () => {
@@ -83,11 +87,13 @@ describe('ListOpportunitiesService', () => {
 
     const result = await service.execute({
       workspaceId: 'ws_1',
-      view: 'due'
+      view: 'due',
+      page: 1,
+      pageSize: 10
     });
 
-    expect(result).toHaveLength(1);
-    expect(result[0]?.title).toBe('Due Proposal');
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0]?.title).toBe('Due Proposal');
   });
 
   it('returns only upcoming opportunities when view is upcoming', async () => {
@@ -115,10 +121,12 @@ describe('ListOpportunitiesService', () => {
 
     const result = await service.execute({
       workspaceId: 'ws_1',
-      view: 'upcoming'
+      view: 'upcoming',
+      page: 1,
+      pageSize: 10
     });
 
-    expect(result).toHaveLength(1);
-    expect(result[0]?.title).toBe('Upcoming Proposal');
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0]?.title).toBe('Upcoming Proposal');
   });
 });
