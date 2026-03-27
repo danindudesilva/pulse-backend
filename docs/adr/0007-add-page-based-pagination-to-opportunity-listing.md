@@ -8,7 +8,7 @@ Accepted
 
 The opportunity listing endpoint currently returns all matching records. As product usage grows, this becomes inefficient and makes the frontend harder to build.
 
-The frontend needs predictable list pagination and metadata for rendering page controls.
+The frontend needs list pagination and metadata for rendering page controls.
 
 ## Decision
 
