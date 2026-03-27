@@ -1,4 +1,9 @@
 import { z } from 'zod';
+import {
+  DEFAULT_OPPORTUNITY_PAGE,
+  DEFAULT_OPPORTUNITY_PAGE_SIZE,
+  MAX_OPPORTUNITY_PAGE_SIZE
+} from '../domain/opportunity-pagination.js';
 
 export const createOpportunityBodySchema = z
   .object({
@@ -48,6 +53,13 @@ export const createOpportunityBodySchema = z
 
 export const listOpportunitiesQuerySchema = z
   .object({
+    page: z.coerce.number().int().min(1).default(DEFAULT_OPPORTUNITY_PAGE),
+    pageSize: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(MAX_OPPORTUNITY_PAGE_SIZE)
+      .default(DEFAULT_OPPORTUNITY_PAGE_SIZE),
     view: z.enum(['all', 'due', 'upcoming']).optional(),
     status: z
       .enum(['draft', 'sent', 'replied', 'won', 'lost', 'paused'])
