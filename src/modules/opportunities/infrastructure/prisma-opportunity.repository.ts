@@ -11,6 +11,7 @@ import type {
   GetOpportunityInput,
   ListOpportunitiesInput,
   OpportunitySummary,
+  PaginatedOpportunities,
   UpdateOpportunityInput,
   UpdateOpportunityStatusInput
 } from '../domain/opportunity.types.js';
@@ -24,6 +25,49 @@ type PrismaOpportunityRepositoryClient = Pick<
 type OpportunityWithPendingFollowUps = Opportunity & {
   followUps: Pick<FollowUp, 'dueAt'>[];
 };
+
+function buildOpportunityListWhere(
+  input: ListOpportunitiesInput
+): Prisma.OpportunityWhereInput {
+  const now = new Date();
+
+  return {
+    workspaceId: input.workspaceId,
+    ...(input.status ? { status: input.status } : {}),
+    ...(input.view === 'due'
+      ? {
+          followUps: {
+            some: {
+              status: 'pending',
+              dueAt: { lte: now }
+            }
+          }
+        }
+      : {}),
+    ...(input.view === 'upcoming'
+      ? {
+          AND: [
+            {
+              followUps: {
+                none: {
+                  status: 'pending',
+                  dueAt: { lte: now }
+                }
+              }
+            },
+            {
+              followUps: {
+                some: {
+                  status: 'pending',
+                  dueAt: { gt: now }
+                }
+              }
+            }
+          ]
+        }
+      : {})
+  };
+}
 
 function toOpportunitySummary(
   opportunity: OpportunityWithPendingFollowUps
@@ -140,58 +184,38 @@ export class PrismaOpportunityRepository implements OpportunityRepository {
 
   async listByWorkspace(
     input: ListOpportunitiesInput
-  ): Promise<OpportunitySummary[]> {
-    const now = new Date();
+  ): Promise<PaginatedOpportunities> {
+    const where = buildOpportunityListWhere(input);
+    const skip = (input.page - 1) * input.pageSize;
 
-    const opportunities = await this.prisma.opportunity.findMany({
-      where: {
-        workspaceId: input.workspaceId,
-        ...(input.status ? { status: input.status } : {}),
-        ...(input.view === 'due'
-          ? {
-              followUps: {
-                some: {
-                  status: 'pending',
-                  dueAt: { lte: now }
-                }
-              }
-            }
-          : {}),
-        ...(input.view === 'upcoming'
-          ? {
-              AND: [
-                {
-                  followUps: {
-                    none: {
-                      status: 'pending',
-                      dueAt: { lte: now }
-                    }
-                  }
-                },
-                {
-                  followUps: {
-                    some: {
-                      status: 'pending',
-                      dueAt: { gt: now }
-                    }
-                  }
-                }
-              ]
-            }
-          : {})
-      },
-      include: {
-        followUps: {
-          where: { status: 'pending' },
-          select: { dueAt: true }
-        }
-      },
-      orderBy: {
-        createdAt: 'desc'
+    const [totalItems, opportunities] = await Promise.all([
+      this.prisma.opportunity.count({ where }),
+      this.prisma.opportunity.findMany({
+        where,
+        include: {
+          followUps: {
+            where: { status: 'pending' },
+            select: { dueAt: true }
+          }
+        },
+        orderBy: {
+          createdAt: 'desc'
+        },
+        skip,
+        take: input.pageSize
+      })
+    ]);
+
+    return {
+      items: opportunities.map(toOpportunitySummary),
+      pagination: {
+        page: input.page,
+        pageSize: input.pageSize,
+        totalItems,
+        totalPages:
+          totalItems === 0 ? 0 : Math.ceil(totalItems / input.pageSize)
       }
-    });
-
-    return opportunities.map(toOpportunitySummary);
+    };
   }
 
   async findByIdInWorkspace(

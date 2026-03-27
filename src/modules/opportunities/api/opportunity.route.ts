@@ -14,6 +14,7 @@ import type {
   GetOpportunityInput,
   ListOpportunitiesInput,
   OpportunitySummary,
+  PaginatedOpportunities,
   UpdateOpportunityInput,
   UpdateOpportunityStatusInput
 } from '../domain/opportunity.types.js';
@@ -30,7 +31,7 @@ export type CreateOpportunityExecutor = {
 };
 
 export type ListOpportunitiesExecutor = {
-  execute(input: ListOpportunitiesInput): Promise<OpportunitySummary[]>;
+  execute(input: ListOpportunitiesInput): Promise<PaginatedOpportunities>;
 };
 
 export type GetOpportunityExecutor = {
@@ -66,6 +67,8 @@ export function createOpportunityRouter(deps: {
 
         const result = await deps.listOpportunitiesService.execute({
           workspaceId: req.authContext.workspaceId,
+          page: query.page,
+          pageSize: query.pageSize,
           ...(query.view !== undefined ? { view: query.view } : {}),
           ...(query.status !== undefined ? { status: query.status } : {})
         });

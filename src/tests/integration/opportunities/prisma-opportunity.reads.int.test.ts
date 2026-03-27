@@ -62,11 +62,13 @@ describe('PrismaOpportunityRepository reads integration', () => {
 
     const rows = await repository.listByWorkspace({
       workspaceId: ctx1.workspace.id,
-      view: 'all'
+      view: 'all',
+      page: 1,
+      pageSize: 10
     });
 
-    expect(rows).toHaveLength(1);
-    expect(rows[0]?.title).toBe('Proposal 1');
+    expect(rows.items).toHaveLength(1);
+    expect(rows.items[0]?.title).toBe('Proposal 1');
   });
 
   it('returns due opportunities when view is due', async () => {
@@ -102,11 +104,13 @@ describe('PrismaOpportunityRepository reads integration', () => {
 
     const rows = await repository.listByWorkspace({
       workspaceId: ctx.workspace.id,
-      view: 'due'
+      view: 'due',
+      page: 1,
+      pageSize: 10
     });
 
-    expect(rows).toHaveLength(1);
-    expect(rows[0]?.title).toBe('Due Proposal');
+    expect(rows.items).toHaveLength(1);
+    expect(rows.items[0]?.title).toBe('Due Proposal');
   });
 
   it('returns upcoming opportunities when view is upcoming', async () => {
@@ -142,11 +146,13 @@ describe('PrismaOpportunityRepository reads integration', () => {
 
     const rows = await repository.listByWorkspace({
       workspaceId: ctx.workspace.id,
-      view: 'upcoming'
+      view: 'upcoming',
+      page: 1,
+      pageSize: 10
     });
 
-    expect(rows).toHaveLength(1);
-    expect(rows[0]?.title).toBe('Upcoming Proposal');
+    expect(rows.items).toHaveLength(1);
+    expect(rows.items[0]?.title).toBe('Upcoming Proposal');
   });
 
   it('returns one opportunity only within the requested workspace', async () => {
@@ -172,5 +178,102 @@ describe('PrismaOpportunityRepository reads integration', () => {
 
     expect(found?.id).toBe(target.id);
     expect(missing).toBeNull();
+  });
+
+  it('returns only the requested page of opportunities with pagination metadata', async () => {
+    const ctx = await seedWorkspaceContext('Jack', 'jack@example.com');
+
+    for (let i = 1; i <= 12; i += 1) {
+      await seedOpportunity(testDb.prisma, {
+        workspaceId: ctx.workspace.id,
+        createdByUserId: ctx.user.id,
+        title: `Proposal ${i}`,
+        status: 'draft'
+      });
+    }
+
+    const page1 = await repository.listByWorkspace({
+      workspaceId: ctx.workspace.id,
+      page: 1,
+      pageSize: 5
+    });
+
+    const page3 = await repository.listByWorkspace({
+      workspaceId: ctx.workspace.id,
+      page: 3,
+      pageSize: 5
+    });
+
+    expect(page1.items).toHaveLength(5);
+    expect(page1.pagination).toEqual({
+      page: 1,
+      pageSize: 5,
+      totalItems: 12,
+      totalPages: 3
+    });
+
+    expect(page3.items).toHaveLength(2);
+    expect(page3.pagination).toEqual({
+      page: 3,
+      pageSize: 5,
+      totalItems: 12,
+      totalPages: 3
+    });
+  });
+
+  it('applies filters before pagination metadata is calculated', async () => {
+    const ctx = await seedWorkspaceContext('Jack', 'jack@example.com');
+
+    for (let i = 1; i <= 7; i += 1) {
+      await seedOpportunity(testDb.prisma, {
+        workspaceId: ctx.workspace.id,
+        createdByUserId: ctx.user.id,
+        title: `Sent Proposal ${i}`,
+        status: 'sent'
+      });
+    }
+
+    for (let i = 1; i <= 3; i += 1) {
+      await seedOpportunity(testDb.prisma, {
+        workspaceId: ctx.workspace.id,
+        createdByUserId: ctx.user.id,
+        title: `Draft Proposal ${i}`,
+        status: 'draft'
+      });
+    }
+
+    const result = await repository.listByWorkspace({
+      workspaceId: ctx.workspace.id,
+      page: 1,
+      pageSize: 5,
+      status: 'sent'
+    });
+
+    expect(result.items).toHaveLength(5);
+    expect(result.pagination).toEqual({
+      page: 1,
+      pageSize: 5,
+      totalItems: 7,
+      totalPages: 2
+    });
+  });
+
+  it('returns zero totalPages when there are no matching opportunities', async () => {
+    const ctx = await seedWorkspaceContext('Jack', 'jack@example.com');
+
+    const result = await repository.listByWorkspace({
+      workspaceId: ctx.workspace.id,
+      page: 1,
+      pageSize: 10,
+      status: 'won'
+    });
+
+    expect(result.items).toEqual([]);
+    expect(result.pagination).toEqual({
+      page: 1,
+      pageSize: 10,
+      totalItems: 0,
+      totalPages: 0
+    });
   });
 });

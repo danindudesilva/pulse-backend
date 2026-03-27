@@ -4,6 +4,7 @@ import type {
   GetOpportunityInput,
   ListOpportunitiesInput,
   OpportunitySummary,
+  PaginatedOpportunities,
   UpdateOpportunityInput,
   UpdateOpportunityStatusInput
 } from '../../../modules/opportunities/domain/opportunity.types.js';
@@ -40,7 +41,7 @@ export class InMemoryOpportunityRepository implements OpportunityRepository {
 
   async listByWorkspace(
     input: ListOpportunitiesInput
-  ): Promise<OpportunitySummary[]> {
+  ): Promise<PaginatedOpportunities> {
     let results = this.opportunities.filter(
       (item) => item.workspaceId === input.workspaceId
     );
@@ -65,7 +66,21 @@ export class InMemoryOpportunityRepository implements OpportunityRepository {
       );
     }
 
-    return results;
+    const totalItems = results.length;
+    const totalPages =
+      totalItems === 0 ? 0 : Math.ceil(totalItems / input.pageSize);
+    const startIndex = (input.page - 1) * input.pageSize;
+    const endIndex = startIndex + input.pageSize;
+
+    return {
+      items: results.slice(startIndex, endIndex),
+      pagination: {
+        page: input.page,
+        pageSize: input.pageSize,
+        totalItems,
+        totalPages
+      }
+    };
   }
 
   async findByIdInWorkspace(
@@ -182,8 +197,16 @@ export class SpyOpportunityRepository implements OpportunityRepository {
 
   async listByWorkspace(
     _input: ListOpportunitiesInput
-  ): Promise<OpportunitySummary[]> {
-    return [];
+  ): Promise<PaginatedOpportunities> {
+    return {
+      items: [],
+      pagination: {
+        page: 0,
+        pageSize: 0,
+        totalItems: 0,
+        totalPages: 0
+      }
+    };
   }
 
   async findByIdInWorkspace(

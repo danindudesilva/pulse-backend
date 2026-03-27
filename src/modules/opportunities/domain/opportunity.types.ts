@@ -34,8 +34,22 @@ export type OpportunitySummary = {
 
 export type OpportunityListView = 'all' | 'due' | 'upcoming';
 
+export type OpportunityPagination = {
+  page: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
+};
+
+export type PaginatedOpportunities = {
+  items: OpportunitySummary[];
+  pagination: OpportunityPagination;
+};
+
 export type ListOpportunitiesInput = {
   workspaceId: string;
+  page: number;
+  pageSize: number;
   view?: OpportunityListView;
   status?: OpportunityStatus;
 };
@@ -43,6 +57,13 @@ export type ListOpportunitiesInput = {
 export type GetOpportunityInput = {
   workspaceId: string;
   opportunityId: string;
+};
+
+export type UpdateOpportunityStatusInput = {
+  workspaceId: string;
+  opportunityId: string;
+  status: OpportunityStatus;
+  quoteSentAt?: Date;
 };
 
 export type UpdateOpportunityInput = {
@@ -55,11 +76,4 @@ export type UpdateOpportunityInput = {
   valueAmount?: string | null;
   currency?: string | null;
   notes?: string | null;
-};
-
-export type UpdateOpportunityStatusInput = {
-  workspaceId: string;
-  opportunityId: string;
-  status: OpportunityStatus;
-  quoteSentAt?: Date;
 };
