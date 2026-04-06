@@ -13,7 +13,7 @@ export const createOpportunityBodySchema = z
     contactEmail: z.email().optional(),
     valueAmount: z
       .string()
-      .regex(/^\d+(\.\d{1,2})?$/, 'valueAmount must be a valid decimal string')
+      .regex(/^\d+(\.\d{1,2})?$/, 'Value must be a valid decimal amount')
       .optional(),
     currency: z.string().trim().length(3).optional(),
     notes: z.string().trim().min(1).max(5000).optional(),
@@ -26,7 +26,7 @@ export const createOpportunityBodySchema = z
       ctx.addIssue({
         code: 'custom',
         path: ['quoteSentAt'],
-        message: 'quoteSentAt is only allowed when status is sent'
+        message: 'Quote sent date is only allowed when status is sent'
       });
     }
 
@@ -34,7 +34,7 @@ export const createOpportunityBodySchema = z
       ctx.addIssue({
         code: 'custom',
         path: ['quoteSentAt'],
-        message: 'quoteSentAt is required when status is sent'
+        message: 'Quote sent date is required when status is sent'
       });
     }
 
@@ -45,7 +45,7 @@ export const createOpportunityBodySchema = z
         ctx.addIssue({
           code: 'custom',
           path: ['quoteSentAt'],
-          message: 'quoteSentAt cannot be in the future'
+          message: 'Quote sent date cannot be in the future'
         });
       }
     }
@@ -82,7 +82,7 @@ export const updateOpportunityStatusBodySchema = z
       ctx.addIssue({
         code: 'custom',
         path: ['quoteSentAt'],
-        message: 'quoteSentAt is required when status is sent'
+        message: 'Quote sent date is required when status is sent'
       });
     }
 
@@ -93,7 +93,7 @@ export const updateOpportunityStatusBodySchema = z
         ctx.addIssue({
           code: 'custom',
           path: ['quoteSentAt'],
-          message: 'quoteSentAt cannot be in the future'
+          message: 'Quote sent date cannot be in the future'
         });
       }
     }
@@ -113,10 +113,7 @@ export const updateOpportunityBodySchema = z
       .union([
         z
           .string()
-          .regex(
-            /^\d+(\.\d{1,2})?$/,
-            'valueAmount must be a valid decimal string'
-          ),
+          .regex(/^\d+(\.\d{1,2})?$/, 'Value must be a valid decimal amount'),
         z.null()
       ])
       .optional(),
